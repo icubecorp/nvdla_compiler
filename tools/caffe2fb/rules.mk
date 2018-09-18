@@ -28,23 +28,23 @@ LOCAL_DIR := $(GET_LOCAL_DIR)
 
 NVDLA_SRC_FILES := \
 	allocator.cpp \
-	conv.cpp \
 	layer.cpp \
 	mat.cpp \
 	modelbin.cpp \
 	net.cpp \
 	paramdict.cpp \
-	pdp.cpp \
-	sdp.cpp \
 	blob.cpp \
 	main.cpp \
-	input.cpp \
 	debug.cpp \
-    relu.cpp \
-    softmax.cpp \
-    innerproduct.cpp \
-    pooling.cpp 
-
+	nvdla_layer/conv.cpp \
+	nvdla_layer/pdp.cpp \
+	nvdla_layer/sdp.cpp \
+	caffe_layer/input.cpp \
+    caffe_layer/relu.cpp \
+    caffe_layer/softmax.cpp \
+    caffe_layer/innerproduct.cpp \
+    caffe_layer/pooling.cpp \
+	caffe_layer/convolution.cpp 
 
 INCLUDES += \
     -I$(ROOT)/include \
