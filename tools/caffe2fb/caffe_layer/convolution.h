@@ -3,6 +3,7 @@
 #define LAYER_CONVOLUTION_H
 
 #include "layer.h"
+#include <vector>
 
 namespace nvdla {
 
@@ -15,6 +16,8 @@ public:
     virtual int load_param(const ParamDict& pd);
 
     virtual int load_model(const ModelBin& mb);
+
+    virtual int convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers);
 
 
 public:

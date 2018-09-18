@@ -36,17 +36,16 @@ NVDLA_SRC_FILES := \
 	blob.cpp \
 	main.cpp \
 	debug.cpp \
+    net_parser.cpp \
 	nvdla_layer/conv.cpp \
 	nvdla_layer/pdp.cpp \
 	nvdla_layer/sdp.cpp \
 	caffe_layer/input.cpp \
-    	caffe_layer/relu.cpp \
-    	caffe_layer/softmax.cpp \
-    	caffe_layer/innerproduct.cpp \
-    	caffe_layer/pooling.cpp \
-	caffe_layer/convolution.cpp \
-	list_parser/list_entry_parser.cpp \
-	list_parser/task_list_parser.cpp
+    caffe_layer/relu.cpp \
+    caffe_layer/softmax.cpp \
+    caffe_layer/innerproduct.cpp \
+    caffe_layer/pooling.cpp \
+	caffe_layer/convolution.cpp 
 
 INCLUDES += \
     -I$(ROOT)/include \

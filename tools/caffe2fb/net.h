@@ -96,9 +96,11 @@ protected:
 
 protected:
     std::vector<Blob> blobs;
-    std::vector<Layer*> layers;
+//    std::vector<Layer*> layers;
 
     std::vector<layer_registry_entry> custom_layer_registry;
+public:
+    std::vector<Layer*> layers;
 };
 
 class Extractor

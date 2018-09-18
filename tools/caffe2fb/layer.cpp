@@ -24,6 +24,23 @@ int Layer::load_model(const ModelBin& /*mb*/)
     return 0;
 }
 
+int Layer::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
+{
+    return 0;
+}
+
+void Layer::fill_params(std::vector<int> params)
+{
+}
+
+void Layer::set_weight_data(Mat weight_data)
+{
+}
+void Layer::print_layer_info(void)
+{
+}
+
+
 #include "layer_declaration.h"
 
 static const layer_registry_entry layer_registry[] =

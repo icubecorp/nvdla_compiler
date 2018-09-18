@@ -1,18 +1,10 @@
 #include "net.h"
-
-#include "task_list_parser.h"
-
+#include "net_parser.h"
 int main()
 {
-    nvdla::Net lenet;
+    nvdla::NetParser lenet;
 
-    lenet.load_param("lenet.param");
-    lenet.load_model("lenet.bin");	
-
-    //test
-    nvdla::TaskListParser task_parser;
-    task_parser.buildList();
-    task_parser.getList();    
-
+    lenet.load_caffe_net("lenet.param","lenet.bin");
+    lenet.build_nvdla_net();
     return 0;
 }

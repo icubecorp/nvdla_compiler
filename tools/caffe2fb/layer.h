@@ -63,6 +63,10 @@ public:
     // load layer specific weight data from model binary
     // return 0 if success
     virtual int load_model(const ModelBin& mb);
+    virtual int convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers);
+    virtual void fill_params(std::vector<int> params);
+    virtual void set_weight_data(Mat weight_data);
+    virtual void print_layer_info(void);
 	
     public:
 		// one input and one output blob
@@ -96,6 +100,10 @@ public:
     std::vector<int> bottoms;
     // blob index which this layer produces as output
     std::vector<int> tops;
+
+    int src_mem_flag;
+    int weight_mem_flag;
+    int dst_mem_flag;
 };
 
 // layer factory function

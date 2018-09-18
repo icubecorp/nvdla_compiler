@@ -17,6 +17,18 @@
 #if NCNN_STRING
 {"Softmax",Softmax_layer_creator},
 #endif
+#if NCNN_STRING
+{"NvdlaConv",NvdlaConv_layer_creator},
+#endif
+#if NCNN_STRING
+{"NvdlaSDP",NvdlaSDP_layer_creator},
+#endif
+#if NCNN_STRING
+{"NvdlaPDP",NvdlaPDP_layer_creator},
+#endif
+
+
+
 
 
 

@@ -24,17 +24,10 @@ DEFINE_LAYER_CREATOR(InnerProduct)
 
 InnerProduct::InnerProduct()
 {
-//    one_blob_only = true;
-//    support_inplace = false;
-
-//    quantize = 0;
-//    dequantize = 0;
 }
 
 InnerProduct::~InnerProduct()
 {
-//    delete quantize;
-//    delete dequantize;
 }
 
 int InnerProduct::load_param(const ParamDict& pd)
@@ -80,151 +73,53 @@ int InnerProduct::load_model(const ModelBin& mb)
         if (bias_data.empty())
             return -100;
     }
+    return 0;
+}
 
-    
-    
-
-    
-#if 0
-    if (int8_scale_term)
+int InnerProduct::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
+{
+    Layer * layer = create_layer("NvdlaConv");
+    #if 0
+    std::vector <int> paras;
+    paras.push_back(num_output);
+    paras.push_back(kernel_w);
+    paras.push_back(kernel_h);
+    paras.push_back(dilation_w);
+    paras.push_back(dilation_h);
+    paras.push_back(stride_w);
+    paras.push_back(stride_h);
+    paras.push_back(pad_w);
+    paras.push_back(pad_h);
+    paras.push_back(bias_term);
+    paras.push_back(weight_data_size);
+    #endif 
+    if(!layer)
     {
-        weight_data_int8_scale = mb.load(1, 1)[0];
-        bottom_blob_int8_scale = mb.load(1, 1)[0];
-    }
-
-    bool weight_data_is_int8 = (weight_data.elemsize == (size_t)1u);
-    bool weight_data_is_float32 = (weight_data.elemsize == (size_t)4u);
-
-    if (weight_data_is_int8 && !use_int8_inference)
-    {
-        fprintf(stderr, "quantized int8 weight loaded but use_int8_inference disabled\n");
+        printf("create layer NvdlaConv failed\n");
         return -1;
     }
+    //layer->fill_params(paras);
+    layer->src_mem_flag = 1;
+    layer->weight_mem_flag = 1;
+    layer->set_weight_data(weight_data);
+    
+    nvdla_layers->push_back(layer);
 
-    if (use_int8_inference)
+    layer = create_layer("NvdlaSDP");
+    if(!layer)
     {
-        quantize = ncnn::create_layer(ncnn::LayerType::Quantize);
-        dequantize = ncnn::create_layer(ncnn::LayerType::Dequantize);
+        printf("create layer NvdlaSDP failed\n");
+        return -1;
     }
-
-    if (weight_data_is_float32 && use_int8_inference)
+    if(bias_term == 1)
     {
-        // quantize weight to int8
-        ncnn::ParamDict pd;
-        pd.set(0, weight_data_int8_scale);// scale
-
-        quantize->load_param(pd);
-
-        Mat int8_weight_data;
-        quantize->forward(weight_data, int8_weight_data);
-
-        if (int8_weight_data.empty())
-            return -100;
-
-        weight_data = int8_weight_data;
+        layer->weight_mem_flag = 1;
+        layer->set_weight_data(bias_data);
     }
-#endif
-
+    layer->dst_mem_flag = 1;
+    nvdla_layers->push_back(layer);
     return 0;
+
 }
-#if 0
-int InnerProduct::forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const
-{
-    int w = bottom_blob.w;
-    int h = bottom_blob.h;
-    int channels = bottom_blob.c;
-    size_t elemsize = bottom_blob.elemsize;
-    int size = w * h;
 
-    top_blob.create(num_output, elemsize, opt.blob_allocator);
-    if (top_blob.empty())
-        return -100;
-
-    if (use_int8_inference)
-    {
-        Mat bottom_blob_int8;
-        bottom_blob_int8.create(w, h, channels, (size_t)1u, opt.workspace_allocator);
-        if (bottom_blob_int8.empty())
-            return -100;
-
-        // quantize, scale and round to nearest
-        {
-            ncnn::ParamDict pd;
-            pd.set(0, bottom_blob_int8_scale);// scale
-
-            quantize->load_param(pd);
-
-            quantize->forward(bottom_blob, bottom_blob_int8, opt);
-        }
-
-        // num_output
-        #pragma omp parallel for num_threads(opt.num_threads)
-        for (int p=0; p<num_output; p++)
-        {
-            int sum = 0;
-
-            // channels
-            for (int q=0; q<channels; q++)
-            {
-                const signed char* w = (const signed char*)weight_data + size * channels * p + size * q;
-                const signed char* m = bottom_blob_int8.channel(q);
-
-                for (int i = 0; i < size; i++)
-                {
-                    sum += m[i] * w[i];
-                }
-            }
-
-            top_blob[p] = sum;
-        }
-
-        // dequantize, reverse scale inplace
-        {
-            float top_rescale = 1.f / (bottom_blob_int8_scale * weight_data_int8_scale);
-
-            ncnn::ParamDict pd;
-            pd.set(0, top_rescale);// scale
-            pd.set(1, bias_term);// bias_term
-            pd.set(2, num_output);// bias_data_size
-
-            dequantize->load_param(pd);
-
-            ncnn::Mat weights[1];
-            weights[0] = bias_data;
-
-            dequantize->load_model(ModelBinFromMatArray(weights));
-
-            dequantize->forward_inplace(top_blob, opt);
-        }
-
-        return 0;
-    }
-
-    // num_output
-    #pragma omp parallel for num_threads(opt.num_threads)
-    for (int p=0; p<num_output; p++)
-    {
-        float sum = 0.f;
-
-        if (bias_term)
-            sum = bias_data[p];
-
-        // channels
-        for (int q=0; q<channels; q++)
-        {
-            const float* w = (const float*)weight_data + size * channels * p + size * q;
-            const float* m = bottom_blob.channel(q);
-
-            for (int i = 0; i < size; i++)
-            {
-                sum += m[i] * w[i];
-            }
-        }
-
-        top_blob[p] = sum;
-    }
-
-    return 0;
-}
-#endif
 }

@@ -28,6 +28,7 @@ public:
     virtual int load_param(const ParamDict& pd);
 
     virtual int load_model(const ModelBin& mb);
+    virtual int convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers);
 
 //    virtual int forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
 

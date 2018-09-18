@@ -21,8 +21,6 @@ DEFINE_LAYER_CREATOR(ReLU)
 
 ReLU::ReLU()
 {
-   // one_blob_only = true;
-   // support_inplace = true;
 }
 
 int ReLU::load_param(const ParamDict& pd)
@@ -33,44 +31,19 @@ int ReLU::load_param(const ParamDict& pd)
     debug_info("slop=%f\n",slope);
     return 0;
 }
-#if 0
-int ReLU::forward_inplace(Mat& bottom_top_blob, const Option& opt) const
+
+int ReLU::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
 {
-    int w = bottom_top_blob.w;
-    int h = bottom_top_blob.h;
-    int channels = bottom_top_blob.c;
-    int size = w * h;
-
-    if (slope == 0.f)
+    Layer * layer = create_layer("NvdlaSDP");
+    if(!layer)
     {
-        #pragma omp parallel for num_threads(opt.num_threads)
-        for (int q=0; q<channels; q++)
-        {
-            float* ptr = bottom_top_blob.channel(q);
-
-            for (int i=0; i<size; i++)
-            {
-                if (ptr[i] < 0)
-                    ptr[i] = 0;
-            }
-        }
+        printf("create layer NvdlaSDP failed\n");
+        return -1;
     }
-    else
-    {
-        #pragma omp parallel for num_threads(opt.num_threads)
-        for (int q=0; q<channels; q++)
-        {
-            float* ptr = bottom_top_blob.channel(q);
-
-            for (int i=0; i<size; i++)
-            {
-                if (ptr[i] < 0)
-                    ptr[i] *= slope;
-            }
-        }
-    }
-
+    layer->dst_mem_flag = 1;
+    nvdla_layers->push_back(layer);
     return 0;
 }
-#endif
+
+
 } 

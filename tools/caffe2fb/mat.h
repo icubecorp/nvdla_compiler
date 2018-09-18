@@ -282,6 +282,7 @@ inline Mat& Mat::operator=(const Mat& m)
     return *this;
 }
 
+
 inline void Mat::fill(float _v)
 {
     int size = total();
