@@ -39,7 +39,11 @@ NVDLA_SRC_FILES := \
 	blob.cpp \
 	main.cpp \
 	input.cpp \
-	debug.cpp 
+	debug.cpp \
+    relu.cpp \
+    softmax.cpp \
+    innerproduct.cpp \
+    pooling.cpp 
 
 
 INCLUDES += \

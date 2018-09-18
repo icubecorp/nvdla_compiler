@@ -43,7 +43,7 @@ int Convolution::load_param(const ParamDict& pd)
     int8_scale_term = pd.get(8, 0);
     use_int8_inference = pd.use_int8_inference;
 
-    static int index=1;
+    static int index=0;
     debug_info("convolution index=%d para....................\n",index++);
     debug_info("num_output=%d,kernel_w=%d,kernel_h=%d,dilation_w=%d,dilation_h=%d,stride_w=%d,\
 				stride_h=%d,pad_w=%d,pad_h=%d,bias_term=%d,weight_data_size=%d,int8_scale_term=%d \n", \
@@ -59,6 +59,14 @@ int Convolution::load_param(const ParamDict& pd)
 int Convolution::load_model(const ModelBin& mb)
 {
     weight_data = mb.load(weight_data_size, 0);
+    static int index = 0;
+    debug_info("Convolution index=%d mode data......\n",index++);
+    debug_info("weigth_data top 10.....\n");
+    float * data = (float *)weight_data.data;
+    for(int i = 0; i < 10; i++)
+    {
+        debug_info("index=%d ,data=%f....\n",i, *data++);
+    }
     if (weight_data.empty())
         return -100;
 
@@ -67,8 +75,15 @@ int Convolution::load_model(const ModelBin& mb)
         bias_data = mb.load(num_output, 1);
         if (bias_data.empty())
             return -100;
+        debug_info("bias_data top 5.....\n");
+        float * data = (float *)bias_data.data;
+        for(int i = 0; i < 5; i++)
+        {
+            debug_info("index=%d ,data=%f....\n",i, *data++);
+        }
+        
     }
-
+    
 #if 0
 
     if (int8_scale_term)
