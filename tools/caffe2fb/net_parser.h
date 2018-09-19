@@ -18,7 +18,6 @@ public:
     void load_caffe_net(const char * protopath,const char * modelpath);
     void build_nvdla_net(void);
 
-protected:
     const std::vector<Layer*>& getLayers() const {
     	return nvdla_layers;
     }

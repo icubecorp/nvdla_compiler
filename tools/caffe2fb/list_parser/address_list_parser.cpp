@@ -10,7 +10,7 @@
 namespace nvdla {
 
 AddressListParser::AddressListParser(NetParser* net) :
-	mNetParserPtr(net)
+	ListEntryParser(net)
 {
 
 }

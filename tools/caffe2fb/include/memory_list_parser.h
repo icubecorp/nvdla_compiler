@@ -18,7 +18,7 @@ public:
 	virtual ~MemoryListParser();
 
 	void  buildList();
-	void* getList() const;
+	const void* getList() const;
 
 private:
 	std::vector<ILoadable::MemoryListEntry> mList;

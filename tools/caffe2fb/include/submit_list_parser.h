@@ -15,11 +15,11 @@ namespace nvdla {
 
 class SubmitListParser: public ListEntryParser {
 public:
-	SubmitListParser(TaskListParser* task_parser);
+	SubmitListParser(NetParser* net, TaskListParser* task_parser);
 	virtual ~SubmitListParser();
 
 	void  buildList();
-	void* getList() const;
+	const void* getList() const;
 
 private:
 	std::vector<ILoadable::SubmitListEntry> mList;
