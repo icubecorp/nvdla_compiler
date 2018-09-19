@@ -9,13 +9,26 @@
 
 namespace nvdla {
 
-MemoryListParser::MemoryListParser() {
-	// TODO Auto-generated constructor stub
+MemoryListParser::MemoryListParser(NetParser* net) :
+    ListEntryParser(net)
+{
 
 }
 
-MemoryListParser::~MemoryListParser() {
-	// TODO Auto-generated destructor stub
+MemoryListParser::~MemoryListParser()
+{
+
 }
+
+void* MemoryListParser::getList() const
+{
+	return &mList;
+}
+
+void  MemoryListParser::buildList()
+{
+	std::vector<Layer*> layers = mNetParserPtr->getLayers();
+}
+
 
 } /* namespace nvdla */

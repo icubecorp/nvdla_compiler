@@ -9,16 +9,21 @@
 #define LIST_ENTRY_PARSER_H_
 
 #include "nvdla/ILoadable.h"
+#include "net_parser.h"
 
 namespace nvdla {
 
 class ListEntryParser {
 public:
-	ListEntryParser();
+	ListEntryParser(NetParser* net);
 	virtual ~ListEntryParser();
 
 	virtual void  buildList() = 0;
 	virtual void* getList() const = 0;
+
+
+protected:
+	NetParser* mNetParserPtr;
 };
 
 } /* namespace nvdla */
