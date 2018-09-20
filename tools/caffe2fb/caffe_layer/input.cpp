@@ -20,8 +20,6 @@ DEFINE_LAYER_CREATOR(Input)
 
 Input::Input()
 {
-    one_blob_only = true;
-    support_inplace = true;
 }
 
 int Input::load_param(const ParamDict& pd)
@@ -32,11 +30,21 @@ int Input::load_param(const ParamDict& pd)
 
     return 0;
 }
-#if 0
-int Input::forward_inplace(Mat& /*bottom_top_blob*/, const Option& /*opt*/) const
-{
-    return 0;
-}
-#endif 
 
+
+int Input::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
+{
+    Layer * layer = create_layer("NvdlaInput");
+    if(!layer)
+    {
+        printf("create layer NvdlaInput failed\n");
+        return -1;
+    }
+    std :: vector < int > params;
+    params.push_back(w);
+    params.push_back(h);
+    params.push_back(c);
+    layer->fill_params(params);
+    nvdla_layers->push_back(layer);
+}
 } // namespace ncnn

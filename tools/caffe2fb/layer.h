@@ -20,6 +20,16 @@ namespace nvdla {
 
 
 class Allocator;
+
+enum layer_type
+{   
+    NvInput = 0,
+    NvConv = 1,
+    NvSDP = 2,
+    NvPDP = 3,
+    NvSoftmax = 4,
+};
+
 class Option
 {
 public:
@@ -104,7 +114,10 @@ public:
     int src_mem_flag;
     int weight_mem_flag;
     int dst_mem_flag;
+    layer_type nvdla_type;
 };
+
+
 
 // layer factory function
 typedef Layer* (*layer_creator_func)();

@@ -26,6 +26,14 @@
 #if NCNN_STRING
 {"NvdlaPDP",NvdlaPDP_layer_creator},
 #endif
+#if NCNN_STRING
+{"NvdlaInput",NvdlaInput_layer_creator},
+#endif
+#if NCNN_STRING
+{"NvdlaSoftmax",NvdlaSoftmax_layer_creator},
+#endif
+
+
 
 
 
