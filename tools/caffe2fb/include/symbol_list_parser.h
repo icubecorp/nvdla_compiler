@@ -16,15 +16,15 @@ namespace nvdla {
 
 class SymbolListParser: public ListEntryParser {
 public:
-	SymbolListParser(NetParser* net, MemoryListParser* memory_parser);
+	SymbolListParser(MemoryListParser* memory_parser);
 	virtual ~SymbolListParser();
 
 	void  buildList();
-	const void* getList() const;
+	void* getList() const;
 
 private:
 
-	std::vector<priv::Loadable::Symbol> mList;
+	std::vector<Loadable::Symbol> mList;
 	MemoryListParser* mMemoryListParserPtr;
 };
 

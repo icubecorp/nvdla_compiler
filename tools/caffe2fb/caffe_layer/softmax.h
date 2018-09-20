@@ -25,6 +25,7 @@ public:
     Softmax();
 
     virtual int load_param(const ParamDict& pd);
+    virtual int convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers);
 
    // virtual int forward_inplace(Mat& bottom_top_blob, const Option& opt) const;
 

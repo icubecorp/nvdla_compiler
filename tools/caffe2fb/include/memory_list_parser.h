@@ -14,14 +14,8 @@ namespace nvdla {
 
 class MemoryListParser: public ListEntryParser {
 public:
-	MemoryListParser(NetParser* net);
+	MemoryListParser();
 	virtual ~MemoryListParser();
-
-	void  buildList();
-	const void* getList() const;
-
-private:
-	std::vector<ILoadable::MemoryListEntry> mList;
 };
 
 } /* namespace nvdla */

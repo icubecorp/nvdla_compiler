@@ -7,6 +7,10 @@ extern Layer* Softmax_layer_creator();
 extern Layer* NvdlaConv_layer_creator();
 extern Layer* NvdlaSDP_layer_creator();
 extern Layer* NvdlaPDP_layer_creator();
+extern Layer* NvdlaInput_layer_creator();
+extern Layer* NvdlaSoftmax_layer_creator();
+
+
 
 
 

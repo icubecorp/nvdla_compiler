@@ -9,15 +9,13 @@
 
 namespace nvdla {
 
-ListEntryParser::ListEntryParser(NetParser* net) :
-	mNetParserPtr(net)
-{
+ListEntryParser::ListEntryParser() {
+	// TODO Auto-generated constructor stub
 
 }
 
-ListEntryParser::~ListEntryParser()
-{
-
+ListEntryParser::~ListEntryParser() {
+	// TODO Auto-generated destructor stub
 }
 
 } /* namespace nvdla */

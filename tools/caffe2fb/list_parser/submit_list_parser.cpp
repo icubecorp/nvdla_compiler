@@ -9,8 +9,8 @@
 
 namespace nvdla {
 
-SubmitListParser::SubmitListParser(NetParser* net, TaskListParser* task_parser) :
-	ListEntryParser(net),
+SubmitListParser::SubmitListParser(TaskListParser* task_parser) :
+	ListEntryParser(),
 	mTaskListPtr(task_parser)
 {
 	// TODO Auto-generated constructor stub
@@ -20,8 +20,8 @@ SubmitListParser::~SubmitListParser() {
 	// TODO Auto-generated destructor stub
 }
 
-const void* SubmitListParser::getList() const {
-	return (const void*)&mList;
+void* SubmitListParser::getList() const {
+	return (void*)&mList;
 }
 
 void SubmitListParser::buildList() {
