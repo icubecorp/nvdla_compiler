@@ -14,16 +14,16 @@ namespace nvdla {
 
 class TaskListParser: public ListEntryParser {
 public:
-	TaskListParser();
+	TaskListParser(NetParser* net);
 	virtual ~TaskListParser();
 
 	void  buildList();
-	void* getList() const;
+	const void* getList() const;
 
 protected:
 	std::vector<NvU16> get_task_id() const {
 		std::vector<NvU16> task_ids;
-		for (ILoadable::TaskListEntry& task : mList)
+		for (const ILoadable::TaskListEntry& task : mList)
 			task_ids.push_back(task.id);
 		return task_ids;
 	}

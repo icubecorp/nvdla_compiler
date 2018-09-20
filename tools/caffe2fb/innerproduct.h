@@ -12,26 +12,47 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-#ifndef LAYER_SOFTMAX_H
-#define LAYER_SOFTMAX_H
+#ifndef LAYER_INNERPRODUCT_H
+#define LAYER_INNERPRODUCT_H
 
 #include "layer.h"
 
 namespace nvdla {
 
-class Softmax : public Layer
+class InnerProduct : public Layer
 {
 public:
-    Softmax();
+    InnerProduct();
+    ~InnerProduct();
 
     virtual int load_param(const ParamDict& pd);
 
-   // virtual int forward_inplace(Mat& bottom_top_blob, const Option& opt) const;
+    virtual int load_model(const ModelBin& mb);
+
+//    virtual int forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
 
 public:
-    int axis;
+    // param
+    int num_output;
+    int bias_term;
+
+    int weight_data_size;
+
+    int int8_scale_term;
+
+    // model
+    Mat weight_data;
+    Mat bias_data;
+
+    float weight_data_int8_scale;
+    float bottom_blob_int8_scale;
+
+    bool use_int8_inference;
+
+//    nvdla::Layer* quantize;
+//    nvdla::Layer* dequantize;
 };
 
 } // namespace ncnn
 
-#endif // LAYER_SOFTMAX_H
+#endif // LAYER_INNERPRODUCT_H

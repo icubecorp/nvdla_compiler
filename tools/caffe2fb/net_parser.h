@@ -18,9 +18,17 @@ public:
     void load_caffe_net(const char * protopath,const char * modelpath);
     void build_nvdla_net(void);
 
+    const std::vector<Layer*>& getLayers() const {
+    	return nvdla_layers;
+    }
+
 public:
     Net caffe_net;
     std :: vector < Layer * > nvdla_layers;
+    
+    
+    
+        
 
 };
 

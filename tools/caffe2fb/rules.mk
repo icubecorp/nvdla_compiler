@@ -36,29 +36,34 @@ NVDLA_SRC_FILES := \
 	blob.cpp \
 	main.cpp \
 	debug.cpp \
-    net_parser.cpp \
+        net_parser.cpp \
 	nvdla_layer/conv.cpp \
 	nvdla_layer/pdp.cpp \
 	nvdla_layer/sdp.cpp \
-	nvdla_layer/nv_input.cpp \
-	nvdla_layer/nv_softmax.cpp \
 	caffe_layer/input.cpp \
-    caffe_layer/relu.cpp \
-    caffe_layer/softmax.cpp \
-    caffe_layer/innerproduct.cpp \
-    caffe_layer/pooling.cpp \
-	caffe_layer/convolution.cpp 
+        caffe_layer/relu.cpp \
+        caffe_layer/softmax.cpp \
+        caffe_layer/innerproduct.cpp \
+        caffe_layer/pooling.cpp \
+	caffe_layer/convolution.cpp \
+	list_parser/address_list_parser.cpp \
+	list_parser/list_entry_parser.cpp \
+	list_parser/memory_list_parser.cpp \
+	list_parser/submit_list_parser.cpp \
+	list_parser/symbol_list_parser.cpp \
+	list_parser/task_list_parser.cpp
 
 INCLUDES += \
     -I$(ROOT)/include \
+    -I$(ROOT)/core/common/include \
     -I$(ROOT)/core/include \
     -I$(ROOT)/external/include \
     -I$(ROOT)/external/libjpeg-turbo \
     -I$(LOCAL_DIR)/include \
     -I$(LOCAL_DIR)
 
-MODULE_CPPFLAGS := -DNVDLA_UTILS_ERROR_TAG="\"DLA_TEST\""
-MODULE_CFLAGS := -DNVDLA_UTILS_ERROR_TAG="\"DLA_TEST\""
+MODULE_CPPFLAGS += -DNVDLA_UTILS_ERROR_TAG="\"DLA_TEST\""
+MODULE_CFLAGS += -DNVDLA_UTILS_ERROR_TAG="\"DLA_TEST\""
 
 #SHARED_LIBS := \
 #    $(ROOT)/out/runtime/libnvdla_runtime/libnvdla_runtime.so

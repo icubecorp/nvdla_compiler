@@ -12,26 +12,39 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-#ifndef LAYER_SOFTMAX_H
-#define LAYER_SOFTMAX_H
+#ifndef LAYER_POOLING_H
+#define LAYER_POOLING_H
 
 #include "layer.h"
 
 namespace nvdla {
 
-class Softmax : public Layer
+class Pooling : public Layer
 {
 public:
-    Softmax();
+    Pooling();
 
     virtual int load_param(const ParamDict& pd);
 
-   // virtual int forward_inplace(Mat& bottom_top_blob, const Option& opt) const;
+//    virtual int forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
+
+    enum { PoolMethod_MAX = 0, PoolMethod_AVE = 1 };
 
 public:
-    int axis;
+    // param
+    int pooling_type;
+    int kernel_w;
+    int kernel_h;
+    int stride_w;
+    int stride_h;
+    int pad_left;
+    int pad_right;
+    int pad_top;
+    int pad_bottom;
+    int global_pooling;
+    int pad_mode;// 0=full 1=valid 2=SAME
 };
 
 } // namespace ncnn
 
-#endif // LAYER_SOFTMAX_H
+#endif // LAYER_POOLING_H

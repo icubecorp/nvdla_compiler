@@ -12,26 +12,26 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-#ifndef LAYER_SOFTMAX_H
-#define LAYER_SOFTMAX_H
+#ifndef LAYER_RELU_H
+#define LAYER_RELU_H
 
 #include "layer.h"
 
 namespace nvdla {
 
-class Softmax : public Layer
+class ReLU : public Layer
 {
 public:
-    Softmax();
+    ReLU();
 
     virtual int load_param(const ParamDict& pd);
 
    // virtual int forward_inplace(Mat& bottom_top_blob, const Option& opt) const;
 
 public:
-    int axis;
+    float slope;
 };
 
 } // namespace ncnn
 
-#endif // LAYER_SOFTMAX_H
+#endif // LAYER_RELU_H

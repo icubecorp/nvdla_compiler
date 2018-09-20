@@ -11,7 +11,6 @@ NvdlaSDP::NvdlaSDP()
     src_mem_flag = -1;
     weight_mem_flag = -1;
     dst_mem_flag = -1;
-    nvdla_type = NvSDP;
 }
 NvdlaSDP::~NvdlaSDP()
 {
@@ -30,7 +29,7 @@ void NvdlaSDP::print_layer_info(void)
 
     debug_info("sdp info.........\n");
     debug_info("para...\n");
-    debug_info("layer_type=%d,slope=%d \n",nvdla_type,slope);
+    debug_info("slope=%d \n",slope);
     debug_info("src_mem_flag=%d,weight_mem_flag=%d,dst_mem_flag=%d\n",src_mem_flag,weight_mem_flag,dst_mem_flag);
     #if 0
     debug_info("weight data top 10...\n");
