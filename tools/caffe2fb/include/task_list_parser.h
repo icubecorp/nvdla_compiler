@@ -20,14 +20,22 @@ public:
 	void  buildList();
 	const void* getList() const;
 
-protected:
-	std::vector<NvU16> get_task_id() const {
+	const std::vector<ILoadable::Interface> get_tasks_type() const {
+		std::vector<ILoadable::Interface> types;
+		for (ILoadable::TaskListEntry& task : mList) {
+			types.push_back((ILoadable::Interface)task.interface);
+		}
+		return types;
+	}
+
+	const std::vector<NvU16> get_task_id() const {
 		std::vector<NvU16> task_ids;
 		for (const ILoadable::TaskListEntry& task : mList)
 			task_ids.push_back(task.id);
 		return task_ids;
 	}
-	friend class SubmitListParser;
+
+	void fillAddressList();
 
 private:
 	std::vector<ILoadable::TaskListEntry> mList;

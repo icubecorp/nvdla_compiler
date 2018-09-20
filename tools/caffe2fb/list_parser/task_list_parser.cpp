@@ -12,12 +12,12 @@ namespace nvdla {
 TaskListParser::TaskListParser(NetParser* net) :
     ListEntryParser(net)
 {
-	// TODO Auto-generated constructor stub
 
 }
 
-TaskListParser::~TaskListParser() {
-	// TODO Auto-generated destructor stub
+TaskListParser::~TaskListParser()
+{
+
 }
 
 const void* TaskListParser::getList() const {
@@ -26,30 +26,50 @@ const void* TaskListParser::getList() const {
 
 void TaskListParser::buildList() {
 
-	int layer_num = 0;
+	if (!mList.empty()) {
+		printf("Warning: list only build for once\n");
+		return;
+	}
 
-	for (int i=0; i<layer_num; i++) {
-
+	std::vector<Layer*> layers = mNetParserPtr->getLayers();
+	NvU16 task_id = 0;
+	ILoadable::Interface current_type = ILoadable::Interface_NONE;
+	for (int i=0; i<layers.size(); i++) {
 		ILoadable::TaskListEntry task;
 
-		task.id = 0;
-		task.interface = ILoadable::Interface_DLA1;
-		task.instance = -1;
+		Layer* layer = layers[i];
 
-		// pre-action
-		for(;;) {
-			task.preactions.push_back(0);
+		if (layer->nvdla_type == NvInput)
+			continue;
+
+		/*
+		if (layer->nvdla_type == NvConv ||
+			layer->nvdla_type == NvSDP  ||
+			layer->nvdla_type == NvPDP) {
+
+			if (current_type == ILoadable::Interface_NONE)
+				current_type = ILoadable::Interface_DLA1;
+
 		}
+		*/
 
-		// post-action
-		for(;;) {
-			task.postactions.push_back(0);
+		if (layer->nvdla_type == NvSoftmax) {
+			task.id = task_id++;
+			task.interface = ILoadable::Interface_DLA1;
+			task.instance = -1;
+			mList.push_back(task);
+
+			task.id = task_id++;
+			task.interface = ILoadable::Interface_EMU1;
+			task.instance = -1;
+			mList.push_back(task);
 		}
-
-		//task.address_list = ?
-
-		mList.push_back(task);
 	}
+}
+
+void TaskListParser::fillAddressList()
+{
+	//TODO
 }
 
 } /* namespace nvdla */
