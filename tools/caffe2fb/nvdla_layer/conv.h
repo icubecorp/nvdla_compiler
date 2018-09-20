@@ -6,6 +6,7 @@
 #include <vector>
 namespace nvdla {
 
+
 class NvdlaConv : public Layer
 {
 public:
@@ -14,6 +15,7 @@ public:
     virtual void fill_params(std::vector<int> params);
     virtual void set_weight_data(Mat weight_data);
     virtual void print_layer_info(void);
+    virtual union dla_layer_param_container get_params(void);
 public:
     // param
     int num_output;

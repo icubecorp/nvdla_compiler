@@ -55,6 +55,7 @@ INCLUDES += \
     -I$(ROOT)/external/include \
     -I$(ROOT)/external/libjpeg-turbo \
     -I$(LOCAL_DIR)/include \
+    -I$(LOCAL_DIR)/nvdla_layer \
     -I$(LOCAL_DIR)
 
 MODULE_CPPFLAGS := -DNVDLA_UTILS_ERROR_TAG="\"DLA_TEST\""

@@ -36,6 +36,15 @@ void NvdlaSoftmax::print_layer_info(void)
 
 }
 
+union dla_layer_param_container NvdlaSoftmax::get_params(void)
+{
+
+    union dla_layer_param_container params;
+    params.nv_softmax_params.axis = axis;
+    return params;
+}
+
+
 }
 
 

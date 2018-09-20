@@ -14,6 +14,7 @@ public:
     ~NvdlaPDP();
     virtual void fill_params(std::vector<int> params);
     virtual void print_layer_info(void);
+    virtual union dla_layer_param_container get_params(void);
     enum { PoolMethod_MAX = 0, PoolMethod_AVE = 1 };
 
 public:

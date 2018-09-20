@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
 namespace nvdla {
 
 Layer::Layer()
@@ -32,6 +31,13 @@ int Layer::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
 void Layer::fill_params(std::vector<int> params)
 {
 }
+
+union dla_layer_param_container Layer::get_params(void)
+{
+  union dla_layer_param_container params = {};
+  return params; 
+}
+
 
 void Layer::set_weight_data(Mat weight_data)
 {

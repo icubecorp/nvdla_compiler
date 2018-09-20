@@ -6,5 +6,6 @@ int main()
 
     lenet.load_caffe_net("lenet.param","lenet.bin");
     lenet.build_nvdla_net();
+    
     return 0;
 }

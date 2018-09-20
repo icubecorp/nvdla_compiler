@@ -37,6 +37,18 @@ void NvdlaInput::print_layer_info(void)
     debug_info("src_mem_flag=%d,weight_mem_flag=%d,dst_mem_flag=%d\n",src_mem_flag,weight_mem_flag,dst_mem_flag);
 }
 
+union dla_layer_param_container NvdlaInput::get_params(void)
+{
+    union dla_layer_param_container params;
+    params.nv_input_params.w = w;
+    params.nv_input_params.h = h;
+    params.nv_input_params.c = c;
+    return params;
+}
+
+
+
+
 }
 
 

@@ -40,7 +40,6 @@ int ReLU::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
         printf("create layer NvdlaSDP failed\n");
         return -1;
     }
-    layer->dst_mem_flag = 1;
     nvdla_layers->push_back(layer);
     return 0;
 }

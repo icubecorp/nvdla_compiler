@@ -74,6 +74,25 @@ void NvdlaConv::print_layer_info(void)
 
 }
 
+union dla_layer_param_container NvdlaConv::get_params(void)
+{
+
+    union dla_layer_param_container params;
+    params.nv_conv_params.bias_term = bias_term;
+    params.nv_conv_params.dilation_h = dilation_h;
+    params.nv_conv_params.dilation_w = dilation_w;
+    params.nv_conv_params.kernel_h = kernel_h;
+    params.nv_conv_params.kernel_w = kernel_w;
+    params.nv_conv_params.num_output = num_output;
+    params.nv_conv_params.pad_h = pad_h;
+    params.nv_conv_params.pad_w = pad_w;
+    params.nv_conv_params.stride_h = stride_h;
+    params.nv_conv_params.stride_w = stride_w;
+    params.nv_conv_params.weight_data_size = weight_data_size;
+    return params;
+}
+
+
 }
 
 

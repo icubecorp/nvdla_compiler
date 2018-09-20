@@ -99,8 +99,6 @@ int Convolution::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
         return -1;
     }
     layer->fill_params(paras);
-    layer->src_mem_flag = 1;
-    layer->weight_mem_flag = 1;
     layer->set_weight_data(weight_data);
     
     nvdla_layers->push_back(layer);
@@ -112,10 +110,8 @@ int Convolution::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
     }
     if (bias_term == 1)
     {
-        layer->weight_mem_flag = 1;
         layer->set_weight_data(bias_data);
     }
-    layer->dst_mem_flag = 1;
     nvdla_layers->push_back(layer);
     return 0;
 }        

@@ -52,6 +52,15 @@ void NvdlaSDP::print_layer_info(void)
 
 }
 
+union dla_layer_param_container NvdlaSDP::get_params(void)
+{
+
+    union dla_layer_param_container params;
+    params.sdp_params.slope = slope;
+    return params;
+}
+
+
 
 } 
 

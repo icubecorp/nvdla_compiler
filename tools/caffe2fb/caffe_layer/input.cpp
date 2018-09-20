@@ -46,5 +46,6 @@ int Input::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
     params.push_back(c);
     layer->fill_params(params);
     nvdla_layers->push_back(layer);
+    return 0;
 }
 } // namespace ncnn

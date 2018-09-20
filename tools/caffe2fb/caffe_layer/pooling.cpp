@@ -67,7 +67,6 @@ int Pooling::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
     params.push_back(global_pooling);
     params.push_back(pad_mode);
     layer->fill_params(params);
-    layer->dst_mem_flag = 1;
     nvdla_layers->push_back(layer);
     return 0;
     
