@@ -110,7 +110,12 @@ int Convolution::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
     }
     if (bias_term == 1)
     {
+        layer->set_action(SDP_ACTION_ADD_BIAS);
         layer->set_weight_data(bias_data);
+    }
+    else
+    {
+        printf("error sdp has no bias data after conv");
     }
     nvdla_layers->push_back(layer);
     return 0;

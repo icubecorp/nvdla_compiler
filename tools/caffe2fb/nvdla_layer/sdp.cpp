@@ -12,6 +12,7 @@ NvdlaSDP::NvdlaSDP()
     weight_mem_flag = -1;
     dst_mem_flag = -1;
     nvdla_type = NvSDP;
+    action = ACTION_NONE;
 }
 NvdlaSDP::~NvdlaSDP()
 {
@@ -60,6 +61,15 @@ union dla_layer_param_container NvdlaSDP::get_params(void)
     return params;
 }
 
+void NvdlaSDP::set_action(dla_action action_p)
+{
+    action = action_p;
+}
+
+dla_action NvdlaSDP::get_action(void)
+{
+    return action;
+}
 
 
 } 

@@ -44,6 +44,9 @@ void NetParser::build_nvdla_net(void)
             );
 
         }
+        if(layer->nvdla_type == NvSDP){
+            debug_info("action=%d \n",layer->get_action());
+        }
     }
 
 

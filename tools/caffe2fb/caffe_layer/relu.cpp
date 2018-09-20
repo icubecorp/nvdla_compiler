@@ -19,6 +19,8 @@ namespace nvdla {
 
 DEFINE_LAYER_CREATOR(ReLU)
 
+
+
 ReLU::ReLU()
 {
 }
@@ -40,6 +42,7 @@ int ReLU::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
         printf("create layer NvdlaSDP failed\n");
         return -1;
     }
+    layer->set_action(SDP_ACTION_RELU);
     nvdla_layers->push_back(layer);
     return 0;
 }

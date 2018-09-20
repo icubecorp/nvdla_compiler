@@ -46,6 +46,16 @@ void Layer::print_layer_info(void)
 {
 }
 
+void Layer::set_action(dla_action action_p)
+{
+}
+
+dla_action Layer::get_action(void)
+{
+    return ACTION_NONE;
+}
+
+
 
 #include "layer_declaration.h"
 
