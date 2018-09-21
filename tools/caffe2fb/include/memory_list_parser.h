@@ -46,6 +46,7 @@ public:
 	void layerInputParse(Layer* layer);
 	void layerConvlutionParse(Layer* layer, Layer* pre_layer);
 	void layerSdpParse(Layer* layer, Layer* pre_layer);
+	void layerPdpParse(Layer* layer, Layer* pre_layer);
 
 private:
 	TaskListParser* mTaskListParser;
