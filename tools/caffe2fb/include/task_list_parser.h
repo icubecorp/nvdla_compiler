@@ -22,7 +22,7 @@ public:
 
 	const std::vector<ILoadable::Interface> get_tasks_type() const {
 		std::vector<ILoadable::Interface> types;
-		for (ILoadable::TaskListEntry& task : mList) {
+		for (const ILoadable::TaskListEntry& task : mList) {
 			types.push_back((ILoadable::Interface)task.interface);
 		}
 		return types;

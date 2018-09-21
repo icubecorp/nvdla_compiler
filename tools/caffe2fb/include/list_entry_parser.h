@@ -13,6 +13,18 @@
 
 namespace nvdla {
 
+enum LIST_PARSER_TYPE {
+	TASK_LIST_PARSER,
+	SUBMIT_LIST_PARSER,
+	MEMORY_LIST_PARSER,
+	ADDRESS_LIST_PARSER,
+	EVENT_LIST_PARSER,
+	TENSOR_DESC_LIST_PARSER,
+	SYMBOL_LIST_PARSER,
+	RELOC_LIST_PARSER,
+	LIST_PARSER_NUM
+};
+
 class ListEntryParser {
 public:
 	ListEntryParser(NetParser* net);
@@ -20,7 +32,6 @@ public:
 
 	virtual void  buildList() = 0;
 	virtual const void* getList() const = 0;
-
 
 protected:
 	NetParser* mNetParserPtr;

@@ -26,7 +26,8 @@ const void* AddressListParser::getList() const
 
 void AddressListParser::buildList()
 {
-	const std::vector<ILoadable::MemoryListEntry> mems = mMemoryListParserPtr->getList();
+	const std::vector<ILoadable::MemoryListEntry> mems =
+			*(const std::vector<ILoadable::MemoryListEntry>*)mMemoryListParserPtr->getList();
 
 	for (int i=0; i<mems.size(); i++) {
 		ILoadable::AddressListEntry addr;
