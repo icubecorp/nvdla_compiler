@@ -80,6 +80,8 @@ public:
     virtual void print_layer_info(void);
     virtual void set_action(dla_action action_p);
     virtual dla_action get_action(void);
+    int get_bpe(void);
+    void set_bpe(int bpe_p);
     public:
 		// one input and one output blob
 		bool one_blob_only;
@@ -118,6 +120,8 @@ public:
     int dst_mem_flag;
     layer_type nvdla_type;
     struct dla_surface_desc surface_desc;
+private:
+    int bpe; //now nvdla data precision is float16, so defaultly set bpe 2
 };
 
 

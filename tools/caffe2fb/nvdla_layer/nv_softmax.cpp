@@ -13,6 +13,7 @@ NvdlaSoftmax::NvdlaSoftmax()
     weight_mem_flag = -1;
     dst_mem_flag = -1;
     nvdla_type = NvSoftmax;
+    set_bpe(2);
 }
 
 NvdlaSoftmax::~NvdlaSoftmax()

@@ -13,6 +13,7 @@ NvdlaSDP::NvdlaSDP()
     dst_mem_flag = -1;
     nvdla_type = NvSDP;
     action = ACTION_NONE;
+    set_bpe(2);
 }
 NvdlaSDP::~NvdlaSDP()
 {

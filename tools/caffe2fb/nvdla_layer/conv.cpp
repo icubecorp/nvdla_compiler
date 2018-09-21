@@ -13,6 +13,7 @@ NvdlaConv::NvdlaConv()
     weight_mem_flag = -1;
     dst_mem_flag = -1;
     nvdla_type = NvConv;
+    set_bpe(2);
 }
 
 NvdlaConv::~NvdlaConv()

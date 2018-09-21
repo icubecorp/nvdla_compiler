@@ -37,6 +37,7 @@ void NetParser::build_nvdla_net(void)
         layer = *it;
         layer->print_layer_info();
         union dla_layer_param_container params = layer->get_params();
+        debug_info("bpe=%d\n",layer->get_bpe());
         if(layer->nvdla_type == NvPDP){
             debug_info("global_pooling=%d,kernel_h=%d,kernel_w=%d,pad_bottom=%d \n",\
             params.pdp_params.global_pooling,

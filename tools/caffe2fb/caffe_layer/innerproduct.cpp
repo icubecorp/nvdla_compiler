@@ -79,26 +79,24 @@ int InnerProduct::load_model(const ModelBin& mb)
 int InnerProduct::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
 {
     Layer * layer = create_layer("NvdlaConv");
-    #if 0
     std::vector <int> paras;
     paras.push_back(num_output);
-    paras.push_back(kernel_w);
-    paras.push_back(kernel_h);
-    paras.push_back(dilation_w);
-    paras.push_back(dilation_h);
-    paras.push_back(stride_w);
-    paras.push_back(stride_h);
-    paras.push_back(pad_w);
-    paras.push_back(pad_h);
+    paras.push_back(-1);
+    paras.push_back(-1);
+    paras.push_back(-1);
+    paras.push_back(-1);
+    paras.push_back(-1);
+    paras.push_back(-1);
+    paras.push_back(-1);
+    paras.push_back(-1);
     paras.push_back(bias_term);
     paras.push_back(weight_data_size);
-    #endif 
     if(!layer)
     {
         printf("create layer NvdlaConv failed\n");
         return -1;
     }
-    //layer->fill_params(paras);
+    layer->fill_params(paras);
     layer->set_weight_data(weight_data);
     
     nvdla_layers->push_back(layer);

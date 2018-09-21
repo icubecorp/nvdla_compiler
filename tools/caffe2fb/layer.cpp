@@ -55,6 +55,15 @@ dla_action Layer::get_action(void)
     return ACTION_NONE;
 }
 
+int Layer::get_bpe(void)
+{
+    return bpe;
+}
+
+void Layer::set_bpe(int bpe_p)
+{
+    bpe = bpe_p;
+}
 
 
 #include "layer_declaration.h"

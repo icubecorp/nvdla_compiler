@@ -13,6 +13,7 @@ NvdlaInput::NvdlaInput()
     weight_mem_flag = -1;
     dst_mem_flag = -1;
     nvdla_type = NvInput;
+    set_bpe(2);
 }
 
 NvdlaInput::~NvdlaInput()
