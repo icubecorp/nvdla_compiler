@@ -11,7 +11,11 @@ using namespace std;
 
 namespace nvdla {
 
-static NvS32 mem_id = 0;
+static NvS32 mem_id = 1;
+static NvS32 conv_id = 0;
+static NvS32 sdp_id = 0;
+static NvS32 pdp_id = 0;
+
 #define MEM_ALIGNMENT_PAGE 4096
 #define MEM_ALIGNMENT_LINE 32
 
@@ -60,7 +64,7 @@ NvU64 MemoryListParser::getInputMemSize(NvU32 w, NvU32 h, NvU32 c, NvU32 bpe, Nv
 NvU64 MemoryListParser::getCovlutionOutputMemSize(CONV_PAR_STR convpar){
 	NvU64 output_height = (convpar.input_height + (convpar.padding_h << 1) - convpar.filter_width)/convpar.stripe_h + 1;
 	NvU64 output_width = (convpar.input_width + (convpar.padding_w << 1) - convpar.filter_width)/convpar.stripe_w + 1;
-	NvU64 size = output_height * output_width * roundUp(convpar.filter_numbers * convpar.byteperpixel, MEM_ALIGNMENT_LINE);
+	NvU64 size = output_height * output_width * roundUp(convpar.filter_numbers * convpar.byteperpixel, 128);
 	return size;
 }
 
@@ -100,11 +104,36 @@ void  MemoryListParser::layerInputParse(Layer* layer){
 
 	//write data back to layer
 	//input
-
+    layer->surface_desc.src_data.address = mem_id;
+    layer->surface_desc.src_data.channel = c;
+    layer->surface_desc.src_data.height = h;
+    layer->surface_desc.src_data.line_stride = w * roundUp(c * bpe, MEM_ALIGNMENT_LINE);
+    layer->surface_desc.src_data.plane_stride = 0;
+    layer->surface_desc.src_data.size = mle.size;
+    layer->surface_desc.src_data.surf_stride = layer->surface_desc.src_data.line_stride * h;
+    //layer->surface_desc.src_data.type = 
+    layer->surface_desc.src_data.width = w;
 	//weight
+	layer->surface_desc.weight_data.address = -1;
+	layer->surface_desc.weight_data.channel = 0;
+	layer->surface_desc.weight_data.height = 0;
+	layer->surface_desc.weight_data.line_stride = 0;
+	layer->surface_desc.weight_data.plane_stride = 0;
+	layer->surface_desc.weight_data.size = 0;
+	layer->surface_desc.weight_data.surf_stride = 0;
+	layer->surface_desc.weight_data.width = 0;
+	layer->surface_desc.weight_data.type = 0;
 
 	//dst
-
+    layer->surface_desc.dst_data.address = -1;
+	layer->surface_desc.dst_data.channel = c;
+	layer->surface_desc.dst_data.height = h;
+	layer->surface_desc.dst_data.line_stride = w * roundUp(c * bpe, MEM_ALIGNMENT_LINE);;
+	layer->surface_desc.dst_data.plane_stride = 0;
+	layer->surface_desc.dst_data.size = mle.size;
+	layer->surface_desc.dst_data.surf_stride = layer->surface_desc.src_data.surf_stride;
+	//layer->surface_desc.dst_data.type = 0;
+	layer->surface_desc.dst_data.width = w;
 	return ;
 	
 }
@@ -113,26 +142,28 @@ void MemoryListParser::layerConvlutionParse(Layer* layer, Layer* pre_layer){
 	nvdla::ILoadable::MemoryListEntry mle;
 	CONV_PAR_STR convpar;
 	string content;
+	NvS32 bpe;
 	union dla_layer_param_container layer_input_par;
         if(layer->nvdla_type != NvConv){
 		printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__, __LINE__, layer->nvdla_type);
 		return ;
         }
-	
+	bpe = layer->get_bpe();
 	layer->weight_mem_flag = 1;
 	//get input parameters
-	layer_input_par = layer->get_params();
-	//convpar.input_width = 
-	//convpar.input_height = 
-	//convpar.input_channel = 
+	convpar.input_width = pre_layer->surface_desc.dst_data.width;
+	convpar.input_height = pre_layer->surface_desc.dst_data.height;
+	convpar.input_channel = pre_layer->surface_desc.dst_data.channel;
+	
 	convpar.padding_w = layer_input_par.nv_conv_params.pad_w;
 	convpar.padding_h = layer_input_par.nv_conv_params.pad_h;
 	convpar.filter_width = layer_input_par.nv_conv_params.kernel_w;
 	convpar.filter_height = layer_input_par.nv_conv_params.kernel_h;
-	//convpar.filter_channel =
+	convpar.filter_channel = pre_layer->surface_desc.dst_data.channel;
 	convpar.stripe_h = layer_input_par.nv_conv_params.stride_h;
 	convpar.stripe_w = layer_input_par.nv_conv_params.stride_w;
-	//convpar.byteperpixel = layer_input_par.nv_conv_params.bpe;
+	convpar.byteperpixel = layer->get_bpe();
+	convpar.filter_numbers = layer_input_par.nv_conv_params.num_output;
 	
 	//---------fill weight mem entry---------
 	mle.id = mem_id;
@@ -140,7 +171,8 @@ void MemoryListParser::layerConvlutionParse(Layer* layer, Layer* pre_layer){
 	mle.bind_id = 0;
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
 	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
-	//sprintf(content, "%s%d", "conv_weight_", mem_id);
+	//sprintf(content, "%d%s%d", conv_id, "conv_weight_", mem_id);
+	conv_id++;
 	mle.contents.push_back(content);
 	mle.offsets.push_back(0);
 	mle.size = getCovlutionOutputMemSize(convpar);
@@ -151,11 +183,36 @@ void MemoryListParser::layerConvlutionParse(Layer* layer, Layer* pre_layer){
 
 	//write data back to layer
 	//input
-
+    layer->surface_desc.src_data.address = pre_layer->surface_desc.dst_data.address;
+    layer->surface_desc.src_data.channel = pre_layer->surface_desc.dst_data.channel;
+    layer->surface_desc.src_data.height = pre_layer->surface_desc.dst_data.height;
+    layer->surface_desc.src_data.line_stride = pre_layer->surface_desc.dst_data.line_stride;
+    layer->surface_desc.src_data.plane_stride = pre_layer->surface_desc.dst_data.plane_stride;
+    layer->surface_desc.src_data.size = pre_layer->surface_desc.dst_data.size;
+    layer->surface_desc.src_data.surf_stride = pre_layer->surface_desc.dst_data.surf_stride;
+    layer->surface_desc.src_data.type = pre_layer->surface_desc.dst_data.type;
+    layer->surface_desc.src_data.width = pre_layer->surface_desc.dst_data.width;
 	//weight
+	layer->surface_desc.weight_data.address = mem_id;
+	layer->surface_desc.weight_data.channel = convpar.filter_channel;
+	layer->surface_desc.weight_data.height = convpar.filter_height;
+	layer->surface_desc.weight_data.line_stride = 0;
+	layer->surface_desc.weight_data.plane_stride = 0;
+	layer->surface_desc.weight_data.size = convpar.filter_width * convpar.filter_height * convpar.filter_channel *bpe * convpar.filter_numbers;
+	layer->surface_desc.weight_data.surf_stride = 0;
+	layer->surface_desc.weight_data.width = convpar.filter_width;
+	//layer->surface_desc.weight_data.type = 0;
 
 	//dst
-
+    layer->surface_desc.dst_data.address = -1;
+	layer->surface_desc.dst_data.channel = convpar.filter_numbers;
+	layer->surface_desc.dst_data.height = (convpar.input_height + (convpar.padding_h << 1) - convpar.filter_width)/convpar.stripe_h + 1;
+	layer->surface_desc.dst_data.line_stride = roundUp(layer->surface_desc.dst_data.width * bpe, MEM_ALIGNMENT_LINE);
+	layer->surface_desc.dst_data.plane_stride = 0;
+	layer->surface_desc.dst_data.size = mle.size;
+	layer->surface_desc.dst_data.surf_stride = layer->surface_desc.dst_data.line_stride * convpar.input_height;
+	//layer->surface_desc.dst_data.type = 0;
+	layer->surface_desc.dst_data.width = (convpar.input_width + (convpar.padding_w << 1) - convpar.filter_width)/convpar.stripe_w + 1;
 	return ;
 }
 

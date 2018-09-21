@@ -51,7 +51,7 @@ CaffeToFlatbuf::CaffeToFlatbuf(const char * protopath, const char * modelpath) :
 	parser = new SubmitListParser(mNetParserPtr, (TaskListParser*)mListParsers[TASK_LIST_PARSER]);
 	mListParsers.push_back(parser);
 
-	parser = new MemoryListParser(mNetParserPtr);
+	parser = new MemoryListParser(mNetParserPtr, (TaskListParser*)mListParsers[TASK_LIST_PARSER]);
 	mListParsers.push_back(parser);
 
 	parser = new AddressListParser(mNetParserPtr, (MemoryListParser*)mListParsers[MEMORY_LIST_PARSER]);
