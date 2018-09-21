@@ -80,7 +80,6 @@ public:
     virtual void print_layer_info(void);
     virtual void set_action(dla_action action_p);
     virtual dla_action get_action(void);
-	
     public:
 		// one input and one output blob
 		bool one_blob_only;
@@ -118,6 +117,7 @@ public:
     int weight_mem_flag;
     int dst_mem_flag;
     layer_type nvdla_type;
+    struct dla_surface_desc surface_desc;
 };
 
 

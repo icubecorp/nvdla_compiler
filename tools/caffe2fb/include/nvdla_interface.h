@@ -59,5 +59,39 @@ union dla_layer_param_container {
     struct dla_nv_softmax_params nv_softmax_params;
 };
 
+typedef unsigned short uint16_t;
+typedef signed short int16_t;
+typedef unsigned int uint32_t;
+typedef signed int int32_t;
+
+struct dla_data_cube {
+	uint16_t type; /* dla_mem_type */
+	int16_t address; /* offset to the actual IOVA in task.address_list */
+
+	uint32_t size;
+
+	/* cube dimensions */
+	uint16_t width;
+	uint16_t height;
+
+	uint16_t channel;
+	uint16_t reserved0;
+
+	/* stride information */
+	uint32_t line_stride;
+	uint32_t surf_stride;
+
+	/* For Rubik only */
+	uint32_t plane_stride;
+};
+
+struct dla_surface_desc {
+	/* Data cube */
+	struct dla_data_cube weight_data;
+	struct dla_data_cube src_data;
+	struct dla_data_cube dst_data;
+};
+
+
 
 #endif
