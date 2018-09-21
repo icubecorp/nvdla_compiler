@@ -6,14 +6,30 @@
  */
 
 #include "memory_list_parser.h"
+#include <string>
+using namespace std;
 
 namespace nvdla {
 
-static NvU32 mem_id = 0;
-#define MEM_ALIGNMENT 4096
+static NvS32 mem_id = 0;
+#define MEM_ALIGNMENT_PAGE 4096
+#define MEM_ALIGNMENT_LINE 32
 
-MemoryListParser::MemoryListParser(NetParser* net) :
-    ListEntryParser(net)
+static int roundUp(int numToRound, int multiple)
+{
+    if (multiple == 0)
+        return numToRound;
+
+    int remainder = numToRound % multiple;
+    if (remainder == 0)
+        return numToRound;
+
+    return numToRound + multiple - remainder;
+}
+
+MemoryListParser::MemoryListParser(NetParser* net, TaskListParser *tlp) :
+    ListEntryParser(net),
+	mTaskListParser(tlp)
 {
 
 }
@@ -28,61 +44,185 @@ const void* MemoryListParser::getList() const
 	return (const void*)&mList;
 }
 
+TaskListParser* MemoryListParser::getTaskListParser(){
+	return mTaskListParser;
+}
+
+
+NvU64 MemoryListParser::getInputMemSize(NvU32 w, NvU32 h, NvU32 c, NvU32 bpe, NvU32 align){
+	
+    NvU64 lineStride = roundUp(w * c * bpe, align);
+    NvU64 surfaceStride = roundUp(lineStride * h, align);
+    NvU64 size = roundUp(surfaceStride, align);
+	return size;
+}
+
+NvU64 MemoryListParser::getCovlutionOutputMemSize(CONV_PAR_STR convpar){
+	NvU64 output_height = (convpar.input_height + (convpar.padding_h << 1) - convpar.filter_width)/convpar.stripe_h + 1;
+	NvU64 output_width = (convpar.input_width + (convpar.padding_w << 1) - convpar.filter_width)/convpar.stripe_w + 1;
+	NvU64 size = output_height * output_width * roundUp(convpar.filter_numbers * convpar.byteperpixel, MEM_ALIGNMENT_LINE);
+	return size;
+}
+
+
+void  MemoryListParser::layerInputParse(Layer* layer){
+	nvdla::ILoadable::MemoryListEntry mle;
+	NvS32 w;
+	NvS32 h;
+	NvS32 c;
+	NvS32 bpe;
+	union dla_layer_param_container layer_input_par;
+    if(layer->nvdla_type != NvInput){
+		printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__, __LINE__, layer->nvdla_type);
+		return ;
+    }
+	//set alloc mem flag
+	layer->src_mem_flag = 1;
+	//get input parameters
+	layer_input_par = layer->get_params();
+	w = layer_input_par.nv_input_params.w;
+	h = layer_input_par.nv_input_params.h;
+	c = layer_input_par.nv_input_params.c;
+	bpe = layer->get_bpe();
+    //fill memory entry
+	mle.id = mem_id;
+	mle.alignment = MEM_ALIGNMENT_PAGE;
+	mle.bind_id = 0;
+	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_INPUT;
+	//mle.contents
+	mle.offsets.push_back(0);
+	mle.size  = getInputMemSize(w, h, c, bpe, 32);
+	mle.tensor_desc_id = 0;
+	//push mem entry to vector
+	mList.push_back(mle);
+	mem_id++;
+
+	//write data back to layer
+	//input
+
+	//weight
+
+	//dst
+
+	return ;
+	
+}
+
+void MemoryListParser::layerConvlutionParse(Layer* layer, Layer* pre_layer){
+	nvdla::ILoadable::MemoryListEntry mle;
+	CONV_PAR_STR convpar;
+	string content;
+	union dla_layer_param_container layer_input_par;
+        if(layer->nvdla_type != NvConv){
+		printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__, __LINE__, layer->nvdla_type);
+		return ;
+        }
+	
+	layer->weight_mem_flag = 1;
+	//get input parameters
+	layer_input_par = layer->get_params();
+	//convpar.input_width = 
+	//convpar.input_height = 
+	//convpar.input_channel = 
+	convpar.padding_w = layer_input_par.nv_conv_params.pad_w;
+	convpar.padding_h = layer_input_par.nv_conv_params.pad_h;
+	convpar.filter_width = layer_input_par.nv_conv_params.kernel_w;
+	convpar.filter_height = layer_input_par.nv_conv_params.kernel_h;
+	//convpar.filter_channel =
+	convpar.stripe_h = layer_input_par.nv_conv_params.stride_h;
+	convpar.stripe_w = layer_input_par.nv_conv_params.stride_w;
+	//convpar.byteperpixel = layer_input_par.nv_conv_params.bpe;
+	
+	//---------fill weight mem entry---------
+	mle.id = mem_id;
+	mle.alignment = MEM_ALIGNMENT_PAGE;
+	mle.bind_id = 0;
+	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	//sprintf(content, "%s%d", "conv_weight_", mem_id);
+	mle.contents.push_back(content);
+	mle.offsets.push_back(0);
+	mle.size = getCovlutionOutputMemSize(convpar);
+	mle.tensor_desc_id = 0;
+	//push mem entry to vector
+	mList.push_back(mle);
+	mem_id++;
+
+	//write data back to layer
+	//input
+
+	//weight
+
+	//dst
+
+	return ;
+}
+
+void MemoryListParser::layerSdpParse(Layer* layer, Layer* pre_layer){
+	nvdla::ILoadable::MemoryListEntry mle;
+	string content;
+	union dla_layer_param_container layer_input_par;
+        if(layer->nvdla_type != NvSDP){
+		printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__, __LINE__, layer->nvdla_type);
+		return ;
+        }
+	
+	if(layer->get_action()){
+		layer->weight_mem_flag = 1;
+
+		//get layer parameters
+		layer_input_par = layer->get_params();
+		//w = layer_input_par.
+
+		
+		//---------fill weight mem entry---------
+		mle.id = mem_id;
+		mle.alignment = MEM_ALIGNMENT_PAGE;
+		mle.bind_id = 0;
+		mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+		mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+		//sprintf(content, "%s%d", "sdp_weight_", mem_id);
+		mle.contents.push_back(content);
+		mle.offsets.push_back(0);
+		//mle.size 
+		mle.tensor_desc_id = 0;
+		//push mem entry to vector
+		mList.push_back(mle);
+		mem_id++;
+		
+	}
+	
+}
+
+
 void  MemoryListParser::buildList()
 {
 	std::vector<Layer*> layers = mNetParserPtr->getLayers();
 	nvdla::ILoadable::MemoryListEntry mle;
-        NvU32 layer_index;	
-	for(layer_index = 0 ; layer_index < layers.size(); layer_index++){
-		if(layers[layer_index]->src_mem_flag){
-			//fill src mem entry
-			mle.id = mem_id;
-			mle.alignment = MEM_ALIGNMENT;
-			mle.bind_id = 0;
-			mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
-			mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_INPUT;
-			//mle.contents
-			//mle.offsets
-			//mle.size
-			mle.tensor_desc_id = 0;
-			//push mem entry to vector
-			mList.push_back(mle);
-			mem_id++;
+	Layer* layer = NULL;
+        NvU32 index;	
+	union dla_layer_param_container layer_parm;
+	for(index = 0 ; index < layers.size(); index++){
+		layer = layers[index];
+		switch(layer->nvdla_type){
+			case 0:
+				break;
+			case 1:
+				//covolution
+				break;
+			case 2:
+				//sdp
+				break;
+			case 3:
+				//pdp
+				break;
+			case 4:
+				//softmax
+				break;
+			default:
+				printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__,__LINE__, layer->nvdla_type);
 		}
-		
-		if(layers[layer_index]->weight_mem_flag){
-			//fill weight mem
-			mle.id = mem_id;
-			mle.alignment = MEM_ALIGNMENT;
-			mle.bind_id = 0;
-			mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
-			mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
-			//mle.contents
-			//mle.offsets
-			//mle.size
-			mle.tensor_desc_id = 0;
-			//push mem entry to vector
-			mList.push_back(mle);
-			mem_id++;
-		}
-		
-		if(layers[layer_index]->dst_mem_flag){
-			//fill dst mem 
-			mle.id = mem_id;
-			mle.alignment = MEM_ALIGNMENT;
-			mle.bind_id = 0;
-			mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
-			mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_OUTPUT;
-			//mle.contents
-			//mle.offsets
-			//mle.size
-			mle.tensor_desc_id = 0;
-			//push mem entry to vector
-			mList.push_back(mle);
-			mem_id++;
-		}
-	}
+	}         
 }
-
-
 } /* namespace nvdla */
