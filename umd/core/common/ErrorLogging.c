@@ -81,6 +81,10 @@ void NvDlaUtilsLogError(const char* tag, const char* path, NvDlaError e, const c
     snprintf(cur, msg + sizeof(msg) - cur, "%s, function %s(), line %d)", file, func, line);
 
     // Output the error.
+#if 0
     NvDlaDebugPrintf("%s\n", msg);
+#else
+    printf("%s\n", msg);
+#endif
 }
 #endif // defined(NVDLA_UTILS_ERROR_TAG)

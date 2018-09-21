@@ -57,6 +57,12 @@ NVDLA_SRC_FILES := \
 	list_parser/tensor_desc_list_parser.cpp \
 	list_parser/symbol_list_parser.cpp \
 	list_parser/reloc_list_parser.cpp 
+
+NVDLA_SRC_FILES += \
+	caffe_to_flatbuf.cpp \
+	$(ROOT)/core/common/Loadable.cpp \
+	$(ROOT)/core/common/Check.cpp \
+	$(ROOT)/core/common/ErrorLogging.c 
 	
 
 INCLUDES += \
