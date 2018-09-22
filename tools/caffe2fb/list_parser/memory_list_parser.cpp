@@ -6,7 +6,9 @@
  */
 
 #include "memory_list_parser.h"
+#include "debug.h"
 #include <string>
+#include <sstream>
 using namespace std;
 
 namespace nvdla {
@@ -141,7 +143,7 @@ void  MemoryListParser::layerInputParse(Layer* layer){
 void MemoryListParser::layerConvlutionParse(Layer* layer, Layer* pre_layer){
 	nvdla::ILoadable::MemoryListEntry mle;
 	CONV_PAR_STR convpar;
-	string content;
+	stringstream content;
 	NvS32 bpe;
 	union dla_layer_param_container layer_input_par;
         if(layer->nvdla_type != NvConv){
@@ -171,9 +173,9 @@ void MemoryListParser::layerConvlutionParse(Layer* layer, Layer* pre_layer){
 	mle.bind_id = 0;
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
 	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
-	//sprintf(content, "%d%s%d", conv_id, "conv_weight_", mem_id);
+	content << conv_id <<"_conv_weight_" << mem_id << endl;
 	conv_id++;
-	mle.contents.push_back(content);
+	mle.contents.push_back(content.str());
 	mle.offsets.push_back(0);
 	mle.size = getCovlutionOutputMemSize(convpar);
 	mle.tensor_desc_id = 0;
@@ -218,7 +220,7 @@ void MemoryListParser::layerConvlutionParse(Layer* layer, Layer* pre_layer){
 
 void MemoryListParser::layerSdpParse(Layer* layer, Layer* pre_layer){
 	nvdla::ILoadable::MemoryListEntry mle;
-	string content;
+	stringstream content;
 	NvS32 bpe;
     if(layer->nvdla_type != NvSDP){
 		printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__, __LINE__, layer->nvdla_type);
@@ -274,8 +276,9 @@ void MemoryListParser::layerSdpParse(Layer* layer, Layer* pre_layer){
 	mle.bind_id = 0;
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
 	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
-	//sprintf(content, "%s%d", "sdp_weight_", mem_id);
-	mle.contents.push_back(content);
+	content << sdp_id << "_sdp_weight_" << mem_id <<endl;
+	sdp_id++;
+	mle.contents.push_back(content.str());
 	mle.offsets.push_back(0);
 	mle.size = layer->surface_desc.weight_data.size; 
 	mle.tensor_desc_id = 0;
@@ -288,7 +291,7 @@ void MemoryListParser::layerSdpParse(Layer* layer, Layer* pre_layer){
 
 void MemoryListParser::layerPdpParse(Layer* layer, Layer* pre_layer){
 	nvdla::ILoadable::MemoryListEntry mle;
-	string content;
+	stringstream content;
 	union dla_layer_param_container layer_input_par;
 	NvS32 w;
 	NvS32 h;
@@ -359,8 +362,9 @@ void MemoryListParser::layerPdpParse(Layer* layer, Layer* pre_layer){
 	mle.bind_id = 0;
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
 	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
-	//sprintf(content, "%s%d", "sdp_weight_", mem_id);
-	mle.contents.push_back(content);
+	content << pdp_id << "_pdp_weight_" <<mem_id <<endl;
+	pdp_id++;
+	mle.contents.push_back(content.str());
 	mle.offsets.push_back(0);
 	mle.size = layer->surface_desc.dst_data.size; 
 	mle.tensor_desc_id = 0;
@@ -371,13 +375,65 @@ void MemoryListParser::layerPdpParse(Layer* layer, Layer* pre_layer){
 	
 }
 
+void MemoryListParser::layerSoftmaxParse(Layer* layer, Layer* pre_layer){
+	nvdla::ILoadable::MemoryListEntry mle;
+	string content;
+	union dla_layer_param_container layer_input_par;
+    if(layer->nvdla_type != NvSoftmax){
+		printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__, __LINE__, layer->nvdla_type);
+		return ;
+    }
+	layer_input_par = layer->get_params();
+	//layer_input_par.nv_softmax_params.axis;
+
+	//input
+	layer->surface_desc.src_data.address = pre_layer->surface_desc.dst_data.address;
+	layer->surface_desc.src_data.channel = pre_layer->surface_desc.dst_data.channel;
+	layer->surface_desc.src_data.height = pre_layer->surface_desc.dst_data.height;
+	layer->surface_desc.src_data.line_stride = pre_layer->surface_desc.dst_data.line_stride;
+	layer->surface_desc.src_data.plane_stride = pre_layer->surface_desc.dst_data.plane_stride;
+	layer->surface_desc.src_data.size = pre_layer->surface_desc.dst_data.size;
+	layer->surface_desc.src_data.surf_stride = pre_layer->surface_desc.dst_data.surf_stride;
+	layer->surface_desc.src_data.type = pre_layer->surface_desc.dst_data.type;
+	layer->surface_desc.src_data.width = pre_layer->surface_desc.dst_data.width;
+	//weight
+	layer->surface_desc.weight_data.address = -1;
+	layer->surface_desc.weight_data.channel = 0;
+	layer->surface_desc.weight_data.height = 0;
+	layer->surface_desc.weight_data.line_stride = 0;
+	layer->surface_desc.weight_data.plane_stride = 0;
+	layer->surface_desc.weight_data.size = 0;
+	layer->surface_desc.weight_data.surf_stride = 0;
+	layer->surface_desc.weight_data.width = 0;
+	//dst
+	layer->surface_desc.dst_data.address = -1;
+	layer->surface_desc.dst_data.channel = 1;
+	layer->surface_desc.dst_data.height = 1;
+	layer->surface_desc.dst_data.plane_stride = 0;
+	//layer->surface_desc.dst_data.type = 0;
+	layer->surface_desc.dst_data.width = 0;
+	layer->surface_desc.dst_data.line_stride = 0;
+	layer->surface_desc.dst_data.surf_stride = 0;
+	layer->surface_desc.dst_data.size =0;
+	return ;
+}
+
+void MemoryListParser::taskTypeParse(ILoadable::Interface task_type){
+	if(task_type == ILoadable::Interface_DLA1){
+		//alloc mem for task
+	}
+	return ;
+}
+
 void  MemoryListParser::buildList()
 {
 	std::vector<Layer*> layers = mNetParserPtr->getLayers();
 	nvdla::ILoadable::MemoryListEntry mle;
 	Layer* layer = NULL;
 	Layer* pre_layer = NULL;
-    NvU32 index;	
+    NvU32 index;
+	std::vector<ILoadable::Interface> task_type_list;
+	//alloc mem for layers
 	for(index = 0 ; index < layers.size(); index++){
 		layer = layers[index];
 		if(index > 0){
@@ -400,12 +456,43 @@ void  MemoryListParser::buildList()
 				layerPdpParse(layer, pre_layer);
 				break;
 			case 4:
+				layerSoftmaxParse(layer, pre_layer);
 				//softmax
 				
 				break;
 			default:
 				printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__,__LINE__, layer->nvdla_type);
 		}
-	}         
+	} 
+
+	//alloc mem for task
+	if(mTaskListParser == NULL){
+		printf("%s, %d, mTaskListParser is NULL, error!\n", __FUNCTION__, __LINE__);
+		return ;
+	}
+	task_type_list = mTaskListParser->get_tasks_type();
+	for(ILoadable::Interface idx : task_type_list){
+		taskTypeParse(idx);
+	}
+	return ;
 }
+
+void MemoryListParser::debugMemList(void){
+	
+	if(0 == mList.size()){
+		printf("%s, %d, mList is empty!\n", __FUNCTION__, __LINE__);
+		return ;
+	}
+	debug_info("\n");
+	debug_info("------------------mem Entry List info--------------------------\n");
+	for(ILoadable::MemoryListEntry mle : mList){
+		debug_info("mem_id = %d, size = %lld, flags = %d, domain = %d\n", mle.id, mle.size, mle.flags, mle.domain);
+		debug_info("alignment = %d, mle.bind_id = %d, offset = %lld\n", mle.alignment, mle.bind_id, mle.offsets[0]);
+		debug_info("contents = %s, tensor_desc_id = %d\n", mle.contents, mle.tensor_desc_id);
+		debug_info("\n");
+	}
+	return ;
+}
+
+
 } /* namespace nvdla */

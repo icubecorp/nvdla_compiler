@@ -47,6 +47,9 @@ public:
 	void layerConvlutionParse(Layer* layer, Layer* pre_layer);
 	void layerSdpParse(Layer* layer, Layer* pre_layer);
 	void layerPdpParse(Layer* layer, Layer* pre_layer);
+	void layerSoftmaxParse(Layer* layer, Layer* pre_layer);
+	void taskTypeParse(ILoadable::Interface task_type);
+	void debugMemList(void);
 
 private:
 	TaskListParser* mTaskListParser;
