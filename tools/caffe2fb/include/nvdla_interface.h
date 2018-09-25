@@ -1,6 +1,13 @@
 #ifndef DLA_INTERFACE_H
 #define DLA_INTERFACE_H
 
+
+
+//some configure for nvdla large 
+#define ATOMIC_C_SIZE   32
+
+
+
 enum dla_action{ ACTION_NONE = 0, SDP_ACTION_ADD_BIAS = 1, SDP_ACTION_RELU = 2,};    
 struct dla_nv_conv_params
 {
@@ -16,6 +23,7 @@ struct dla_nv_conv_params
     int pad_h;
     int bias_term;
     int weight_data_size;
+    void * weight_data; //data format is float
 };
 
 struct dla_nv_input_params
@@ -28,6 +36,7 @@ struct dla_nv_input_params
 struct dla_sdp_params
 {
     float slope;
+    void * weight_data; //data format is float
 };
 
 

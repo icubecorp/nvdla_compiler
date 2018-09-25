@@ -11,7 +11,7 @@ namespace nvdla {
 #define LOG_INFO	2
 #define LOG_DEBUG   3
 
-#define LOG_LEVEL	LOG_ERROR
+#define LOG_LEVEL	LOG_DEBUG
 
 void debug_info(const char *format, ... ) {
 	if (LOG_LEVEL >= LOG_DEBUG) {
