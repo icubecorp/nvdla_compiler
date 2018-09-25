@@ -487,8 +487,13 @@ void MemoryListParser::debugMemList(void){
 	debug_info("------------------mem Entry List info--------------------------\n");
 	for(ILoadable::MemoryListEntry mle : mList){
 		debug_info("mem_id = %d, size = %lld, flags = %d, domain = %d\n", mle.id, mle.size, mle.flags, mle.domain);
-		debug_info("alignment = %d, mle.bind_id = %d, offset = %lld\n", mle.alignment, mle.bind_id, mle.offsets[0]);
-		debug_info("contents = %s, tensor_desc_id = %d\n", mle.contents, mle.tensor_desc_id);
+		debug_info("alignment = %d, mle.bind_id = %d, tensor_desc_id = %d\n", mle.alignment, mle.bind_id, mle.tensor_desc_id);
+		for(string contenstr : mle.contents){
+			debug_info("contents = %s, \n", contenstr);
+		}
+		for(uint64_t offset : mle.offsets){
+			debug_info("offset = %lld\n", offset);
+		}
 		debug_info("\n");
 	}
 	return ;
