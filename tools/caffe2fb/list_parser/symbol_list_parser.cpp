@@ -205,4 +205,16 @@ void SymbolListParser::buildList() {
     fill_weight_blobs(&mList, mNetParserPtr, mMemoryListParserPtr);
 }
 
+void SymbolListParser::dump_blobs_info(void){
+    priv::Loadable::Symbol symbol;
+    for(int i = 0; i < mList.size(); i++){
+        symbol = mList[i];
+        NvU8 *data = symbol.data;
+        debug_info("name=%s,size=%d\n",symbol.name.c_str(), symbol.size);
+        for(int j = 0; j < symbol.size; j++)
+            debug_info("0x%x ",*data++);
+    }
+
+}
+
 } /* namespace nvdla */

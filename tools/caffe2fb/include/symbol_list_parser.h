@@ -40,6 +40,7 @@ static int roundUp(int numToRound, int multiple)
             MemoryListParser* memory_parser);
     void* fill_conv_weight_data(Layer * layer);
     void* fill_bias_weight_data(Layer * layer);
+    void dump_blobs_info(void);
     enum weight_format {WEIGHT_DIRECT_CONV = 1, WEIGHT_BIAS = 2,WEIGHT_CAFFEMODE = 3};
 
     struct nvdla_meta_data
