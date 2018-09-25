@@ -11,6 +11,7 @@
 #include "list_entry_parser.h"
 #include "priv/Loadable.h"
 #include "memory_list_parser.h"
+#include "list_entry_parser.h"
 #include "nvdla_interface.h"
 #include "half.h"
 
@@ -29,7 +30,7 @@ static int roundUp(int numToRound, int multiple)
 
     return numToRound + multiple - remainder;
 }
-	SymbolListParser(NetParser* net, MemoryListParser* memory_parser);
+	SymbolListParser(NetParser* net, MemoryListParser* memory_parser, TaskListParser* task_parser);
 	virtual ~SymbolListParser();
 
 	void  buildList();
@@ -37,7 +38,7 @@ static int roundUp(int numToRound, int multiple)
     void fill_weight_blobs(std::vector<priv::Loadable::Symbol> *mlist, NetParser* net,\
             MemoryListParser* memory_parser);
     void fill_taskinfo_blobs(std::vector<priv::Loadable::Symbol> *mlist,\
-            MemoryListParser* memory_parser);
+            MemoryListParser* memory_parser, TaskListParser* task_parser);
     void* fill_conv_weight_data(Layer * layer);
     void* fill_bias_weight_data(Layer * layer);
     void dump_blobs_info(void);
@@ -60,6 +61,7 @@ private:
 
 	std::vector<priv::Loadable::Symbol> mList;
 	MemoryListParser* mMemoryListParserPtr;
+    TaskListParser* mTaskListParserPtr;
 
 };
 

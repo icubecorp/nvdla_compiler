@@ -8,12 +8,14 @@
 #include "symbol_list_parser.h"
 #include "debug.h"
 #include <stdlib.h>
+#include "nvdla/ILoadable.h"
 
 namespace nvdla {
 
-SymbolListParser::SymbolListParser(NetParser* net, MemoryListParser* memory_parser) :
+SymbolListParser::SymbolListParser(NetParser* net, MemoryListParser* memory_parser, TaskListParser* task_parser) :
     ListEntryParser(net),
-    mMemoryListParserPtr(memory_parser)
+    mMemoryListParserPtr(memory_parser),
+    mTaskListParserPtr(task_parser)
 {
 
 }
@@ -196,6 +198,29 @@ void SymbolListParser::fill_weight_blobs(std::vector<priv::Loadable::Symbol> *ml
 
 }
 
+
+
+void SymbolListParser::fill_taskinfo_blobs(std::vector<priv::Loadable::Symbol> *mlist,
+                MemoryListParser* memory_parser, TaskListParser* task_parser){
+                
+                std::vector<ILoadable::TaskListEntry> *task_list = (std::vector<ILoadable::TaskListEntry> *)task_parser->getList();
+                ILoadable::TaskListEntry task_entry;
+                priv::Loadable::Symbol blob;
+                for(unsigned int i = 0; i < task_list->size(); i++){
+                    task_entry = (*task_list)[i];
+                    switch (task_entry.interface){
+                        case ILoadable::Interface_DLA1:
+                            break;
+                        case ILoadable::Interface_EMU1:
+                            break;
+                        default:
+                            printf("error not such task type=%d for blobs\n",task_entry.interface);
+                            break;
+                    }
+                }
+}
+
+
 void SymbolListParser::buildList() {
 
     if (!mList.empty()) {
@@ -207,11 +232,11 @@ void SymbolListParser::buildList() {
 
 void SymbolListParser::dump_blobs_info(void){
     priv::Loadable::Symbol symbol;
-    for(int i = 0; i < mList.size(); i++){
+    for(unsigned int i = 0; i < mList.size(); i++){
         symbol = mList[i];
         NvU8 *data = symbol.data;
         debug_info("name=%s,size=%d\n",symbol.name.c_str(), symbol.size);
-        for(int j = 0; j < symbol.size; j++)
+        for(unsigned int j = 0; j < symbol.size; j++)
             debug_info("0x%x ",*data++);
     }
 

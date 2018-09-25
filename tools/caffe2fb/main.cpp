@@ -13,7 +13,7 @@ int main()
     MemoryListParser* memlist = new MemoryListParser(&lenet, tlp);
     memlist->buildList();    
     memlist->debugMemList();
-    SymbolListParser* symbollist = new SymbolListParser(&lenet,memlist);
+    SymbolListParser* symbollist = new SymbolListParser(&lenet,memlist,tlp);
     symbollist->buildList();
     symbollist->dump_blobs_info();
     return 0;
