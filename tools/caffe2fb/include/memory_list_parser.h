@@ -41,7 +41,7 @@ public:
 	const void* getList() const;
 	TaskListParser* getTaskListParser();
 	NvU64 getInputMemSize(NvU32 w, NvU32 h, NvU32 c, NvU32 bpe, NvU32 align);
-	NvU64 getCovlutionOutputMemSize(CONV_PAR_STR convpar);
+	NvU64 getCovlutionOutputMemSize(CONV_PAR_STR* convpar);
 
 	void layerInputParse(Layer* layer);
 	void layerConvlutionParse(Layer* layer, Layer* pre_layer);
