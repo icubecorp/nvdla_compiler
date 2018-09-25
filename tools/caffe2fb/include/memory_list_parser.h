@@ -50,6 +50,7 @@ public:
 	void layerSoftmaxParse(Layer* layer, Layer* pre_layer);
 	void taskTypeParse(ILoadable::Interface task_type);
 	void debugMemList(void);
+	void debugLayer(Layer* layer);
 
 private:
 	TaskListParser* mTaskListParser;

@@ -95,31 +95,33 @@ void  MemoryListParser::layerInputParse(Layer* layer){
 	c = layer_input_par.nv_input_params.c;
 	bpe = layer->get_bpe();
         debug_info("%s, %d, w = %d, h = %d, c = %d, bpe = %d\n", __FUNCTION__, __LINE__, w, h, c, bpe);
-        //fill memory entry
+
+	//write data back to layer
+	//input
+    layer->surface_desc.src_data.address = mem_id;
+    layer->surface_desc.src_data.channel = c;
+    layer->surface_desc.src_data.height = h;
+    layer->surface_desc.src_data.width = w;
+    layer->surface_desc.src_data.line_stride = w * roundUp((c * bpe) % MEM_ALIGNMENT_LINE, MEM_ALIGNMENT_LINE);
+    layer->surface_desc.src_data.plane_stride = 0;
+    layer->surface_desc.src_data.surf_stride = layer->surface_desc.src_data.line_stride * h;
+    //layer->surface_desc.src_data.type = 
+	layer->surface_desc.src_data.size = w * h * roundUp(c * bpe, MEM_ALIGNMENT_LINE);
+	
+
+    //fill memory entry
 	mle.id = mem_id;
 	mle.alignment = MEM_ALIGNMENT_PAGE;
 	mle.bind_id = 0;
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
 	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_INPUT;
-	//mle.contents
 	mle.offsets.push_back(0);
 	mle.size  = getInputMemSize(w, h, c, bpe, 32);
 	mle.tensor_desc_id = 0;
 	//push mem entry to vector
 	mList.push_back(mle);
 	mem_id++;
-
-	//write data back to layer
-	//input
-        layer->surface_desc.src_data.address = mem_id;
-        layer->surface_desc.src_data.channel = c;
-        layer->surface_desc.src_data.height = h;
-        layer->surface_desc.src_data.line_stride = w * roundUp(c * bpe, MEM_ALIGNMENT_LINE);
-        layer->surface_desc.src_data.plane_stride = 0;
-        layer->surface_desc.src_data.size = mle.size;
-        layer->surface_desc.src_data.surf_stride = layer->surface_desc.src_data.line_stride * h;
-        //layer->surface_desc.src_data.type = 
-        layer->surface_desc.src_data.width = w;
+		
 	//weight
 	layer->surface_desc.weight_data.address = -1;
 	layer->surface_desc.weight_data.channel = 0;
@@ -132,15 +134,15 @@ void  MemoryListParser::layerInputParse(Layer* layer){
 	layer->surface_desc.weight_data.type = 0;
 
 	//dst
-        layer->surface_desc.dst_data.address = -1;
+        layer->surface_desc.dst_data.address = layer->surface_desc.src_data.address;
 	layer->surface_desc.dst_data.channel = c;
 	layer->surface_desc.dst_data.height = h;
-	layer->surface_desc.dst_data.line_stride = w * roundUp(c * bpe, MEM_ALIGNMENT_LINE);;
+	layer->surface_desc.dst_data.width = w;
+	layer->surface_desc.dst_data.line_stride = layer->surface_desc.src_data.line_stride;
 	layer->surface_desc.dst_data.plane_stride = 0;
-	layer->surface_desc.dst_data.size = mle.size;
+	layer->surface_desc.dst_data.size = layer->surface_desc.src_data.size;
 	layer->surface_desc.dst_data.surf_stride = layer->surface_desc.src_data.surf_stride;
 	//layer->surface_desc.dst_data.type = 0;
-	layer->surface_desc.dst_data.width = w;
 	return ;
 	
 }
@@ -157,14 +159,13 @@ void MemoryListParser::layerConvlutionParse(Layer* layer, Layer* pre_layer){
         }
         debug_info("%s, %d\n", __FUNCTION__, __LINE__);
 	bpe = layer->get_bpe();
-	layer->weight_mem_flag = 1;
 	//get input parameters
         layer_input_par = layer->get_params();
 	convpar.input_width = pre_layer->surface_desc.dst_data.width;
 	convpar.input_height = pre_layer->surface_desc.dst_data.height;
 	convpar.input_channel = pre_layer->surface_desc.dst_data.channel;
         	
-        debug_info("%s, %d, convpar.input_width = %d, convpar.input_height = %d, convpar.input_channel = %d\n", __FUNCTION__, __LINE__, convpar.input_width, convpar.input_height, convpar.input_channel);
+    debug_info("%s, %d, convpar.input_width = %d, convpar.input_height = %d, convpar.input_channel = %d\n", __FUNCTION__, __LINE__, convpar.input_width, convpar.input_height, convpar.input_channel);
 	convpar.padding_w = layer_input_par.nv_conv_params.pad_w;
 	convpar.padding_h = layer_input_par.nv_conv_params.pad_h;
         debug_info("%s, %d, convpar.padding_w = %d, convpar.padding_h = %d\n", __FUNCTION__, __LINE__, convpar.padding_w, convpar.padding_h);
@@ -186,6 +187,31 @@ void MemoryListParser::layerConvlutionParse(Layer* layer, Layer* pre_layer){
         }
         debug_info("%s, %d, filter_width =%d, filter_height = %d, filter_channel = %d, stripe_h = %d, stripe_w = %d, filter_numbers = %d\n", __FUNCTION__, __LINE__, convpar.filter_width, convpar.filter_height, convpar.filter_channel, convpar.stripe_h, convpar.stripe_w, convpar.filter_numbers);	
         debug_info("%s, %d\n", __FUNCTION__, __LINE__);
+
+	//write data back to layer
+	//input
+        layer->surface_desc.src_data.address = pre_layer->surface_desc.dst_data.address;
+        layer->surface_desc.src_data.channel = pre_layer->surface_desc.dst_data.channel;
+        layer->surface_desc.src_data.height = pre_layer->surface_desc.dst_data.height;
+        layer->surface_desc.src_data.line_stride = pre_layer->surface_desc.dst_data.line_stride;
+        layer->surface_desc.src_data.plane_stride = pre_layer->surface_desc.dst_data.plane_stride;
+        layer->surface_desc.src_data.size = pre_layer->surface_desc.dst_data.size;
+        layer->surface_desc.src_data.surf_stride = pre_layer->surface_desc.dst_data.surf_stride;
+        layer->surface_desc.src_data.type = pre_layer->surface_desc.dst_data.type;
+        layer->surface_desc.src_data.width = pre_layer->surface_desc.dst_data.width;
+
+        debug_info("%s, %d\n", __FUNCTION__, __LINE__);
+	//weight
+	layer->weight_mem_flag = 1;
+	layer->surface_desc.weight_data.address = mem_id;
+	layer->surface_desc.weight_data.channel = convpar.filter_channel;
+	layer->surface_desc.weight_data.height = convpar.filter_height;
+	layer->surface_desc.weight_data.width = convpar.filter_width;
+	layer->surface_desc.weight_data.line_stride = 0;
+	layer->surface_desc.weight_data.plane_stride = 0;
+	layer->surface_desc.weight_data.size = roundUp(convpar.filter_width * convpar.filter_height * convpar.filter_channel *bpe * convpar.filter_numbers, 128);
+	layer->surface_desc.weight_data.surf_stride = 0;
+	//layer->surface_desc.weight_data.type = 0;
 	//---------fill weight mem entry---------
 	mle.id = mem_id;
 	mle.alignment = MEM_ALIGNMENT_PAGE;
@@ -204,7 +230,7 @@ void MemoryListParser::layerConvlutionParse(Layer* layer, Layer* pre_layer){
 	mle.offsets.push_back(0);
 
         debug_info("%s, %d\n", __FUNCTION__, __LINE__);
-	mle.size = roundUp(convpar.filter_width * convpar.filter_height * convpar.filter_channel *bpe * convpar.filter_numbers, 128);
+	mle.size = layer->surface_desc.weight_data.size;
 
         debug_info("%s, %d, mle.size = %lld\n", __FUNCTION__, __LINE__, mle.size);
 	mle.tensor_desc_id = 0;
@@ -213,41 +239,17 @@ void MemoryListParser::layerConvlutionParse(Layer* layer, Layer* pre_layer){
 	mList.push_back(mle);
 	mem_id++;
 
-	//write data back to layer
-	//input
-        layer->surface_desc.src_data.address = pre_layer->surface_desc.dst_data.address;
-        layer->surface_desc.src_data.channel = pre_layer->surface_desc.dst_data.channel;
-        layer->surface_desc.src_data.height = pre_layer->surface_desc.dst_data.height;
-        layer->surface_desc.src_data.line_stride = pre_layer->surface_desc.dst_data.line_stride;
-        layer->surface_desc.src_data.plane_stride = pre_layer->surface_desc.dst_data.plane_stride;
-        layer->surface_desc.src_data.size = pre_layer->surface_desc.dst_data.size;
-        layer->surface_desc.src_data.surf_stride = pre_layer->surface_desc.dst_data.surf_stride;
-        layer->surface_desc.src_data.type = pre_layer->surface_desc.dst_data.type;
-        layer->surface_desc.src_data.width = pre_layer->surface_desc.dst_data.width;
-
-        debug_info("%s, %d\n", __FUNCTION__, __LINE__);
-	//weight
-	layer->surface_desc.weight_data.address = mem_id;
-	layer->surface_desc.weight_data.channel = convpar.filter_channel;
-	layer->surface_desc.weight_data.height = convpar.filter_height;
-	layer->surface_desc.weight_data.line_stride = 0;
-	layer->surface_desc.weight_data.plane_stride = 0;
-	layer->surface_desc.weight_data.size = mle.size;
-	layer->surface_desc.weight_data.surf_stride = 0;
-	layer->surface_desc.weight_data.width = convpar.filter_width;
-	//layer->surface_desc.weight_data.type = 0;
-
-        debug_info("%s, %d\n", __FUNCTION__, __LINE__);
+    debug_info("%s, %d\n", __FUNCTION__, __LINE__);
 	//dst
-        layer->surface_desc.dst_data.address = -1;
+    layer->surface_desc.dst_data.address = -1;
 	layer->surface_desc.dst_data.channel = convpar.filter_numbers;
+	layer->surface_desc.dst_data.width = (convpar.input_width + (convpar.padding_w << 1) - convpar.filter_width)/convpar.stripe_w + 1;
 	layer->surface_desc.dst_data.height = (convpar.input_height + (convpar.padding_h << 1) - convpar.filter_width)/convpar.stripe_h + 1;
-	layer->surface_desc.dst_data.line_stride = roundUp(layer->surface_desc.dst_data.width * bpe, MEM_ALIGNMENT_LINE);
+	layer->surface_desc.dst_data.line_stride = layer->surface_desc.dst_data.width * roundUp(layer->surface_desc.dst_data.channel* bpe % MEM_ALIGNMENT_LINE, MEM_ALIGNMENT_LINE);
 	layer->surface_desc.dst_data.plane_stride = 0;
 	layer->surface_desc.dst_data.size = getCovlutionOutputMemSize(&convpar);
-	layer->surface_desc.dst_data.surf_stride = layer->surface_desc.dst_data.line_stride * convpar.input_height;
+	layer->surface_desc.dst_data.surf_stride = layer->surface_desc.dst_data.line_stride * layer->surface_desc.dst_data.height;
 	//layer->surface_desc.dst_data.type = 0;
-	layer->surface_desc.dst_data.width = (convpar.input_width + (convpar.padding_w << 1) - convpar.filter_width)/convpar.stripe_w + 1;
 	return ;
 }
 
@@ -275,13 +277,14 @@ void MemoryListParser::layerSdpParse(Layer* layer, Layer* pre_layer){
 	   layer->weight_mem_flag = 1;
            //weight
 	   layer->surface_desc.weight_data.address = mem_id;
-	   layer->surface_desc.weight_data.channel = 1;
+	   layer->surface_desc.weight_data.channel = layer->surface_desc.src_data.channel;
 	   layer->surface_desc.weight_data.height = 1;
-	   layer->surface_desc.weight_data.line_stride = 1;
-	   layer->surface_desc.weight_data.plane_stride = 1;
-	   layer->surface_desc.weight_data.size = layer->surface_desc.src_data.channel * bpe;
-	   layer->surface_desc.weight_data.surf_stride = 1;
 	   layer->surface_desc.weight_data.width = 1;
+	   //input count
+	   layer->surface_desc.weight_data.line_stride = layer->surface_desc.weight_data.width * roundUp((layer->surface_desc.src_data.channel * bpe) % 32, 32);
+	   layer->surface_desc.weight_data.plane_stride = 0;
+	   layer->surface_desc.weight_data.size = layer->surface_desc.src_data.channel * bpe;
+	   layer->surface_desc.weight_data.surf_stride = layer->surface_desc.weight_data.line_stride;
                 
            //fill weight mem
 	   mle.id = mem_id;
@@ -358,7 +361,6 @@ void MemoryListParser::layerPdpParse(Layer* layer, Layer* pre_layer){
            printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__, __LINE__, layer->nvdla_type);
 	   return ;
         }
-	layer->dst_mem_flag = 1;
 	pbe = layer->get_bpe();
 	layer_input_par = layer->get_params();
 	//global_pooling = layer_input_par.pdp_params.global_pooling;
@@ -394,16 +396,17 @@ void MemoryListParser::layerPdpParse(Layer* layer, Layer* pre_layer){
 	layer->surface_desc.weight_data.surf_stride = 0;
 	layer->surface_desc.weight_data.width = w;
 	//dst
+	layer->dst_mem_flag = 1;
 	layer->surface_desc.dst_data.address = mem_id;
 	layer->surface_desc.dst_data.channel = layer->surface_desc.src_data.channel;
 	layer->surface_desc.dst_data.height = (layer->surface_desc.src_data.height + pad_top + pad_bottom - h)/stripe_h + 1;
+	layer->surface_desc.dst_data.width = (layer->surface_desc.src_data.width + pad_left + pad_right - w)/stripe_w + 1;
 	layer->surface_desc.dst_data.plane_stride = 0;
 	//layer->surface_desc.dst_data.type = 0;
-	layer->surface_desc.dst_data.width = (layer->surface_desc.src_data.width + pad_left + pad_right - w)/stripe_w + 1;
-	layer->surface_desc.dst_data.line_stride = roundUp(layer->surface_desc.dst_data.width *pbe * layer->surface_desc.dst_data.channel, 32);
+	layer->surface_desc.dst_data.line_stride = layer->surface_desc.dst_data.width * roundUp((pbe * layer->surface_desc.dst_data.channel) % 32, 32);
 	layer->surface_desc.dst_data.surf_stride = layer->surface_desc.dst_data.line_stride * layer->surface_desc.dst_data.height;
-	layer->surface_desc.dst_data.size = layer->surface_desc.dst_data.width * layer->surface_desc.dst_data.height * roundUp(layer->surface_desc.dst_data.channel * pbe, 32) * 1;
-	//---------fill weight mem entry----------------
+	layer->surface_desc.dst_data.size = layer->surface_desc.dst_data.width * layer->surface_desc.dst_data.height * roundUp(layer->surface_desc.dst_data.channel * pbe, 32);
+	//---------fill dst mem entry----------------
 	mle.id = mem_id;
 	mle.alignment = MEM_ALIGNMENT_PAGE;
 	mle.bind_id = 0;
@@ -493,15 +496,15 @@ void  MemoryListParser::buildList()
 				//covolution
 				layerConvlutionParse(layer, pre_layer);
 				break;
-			case 2:
+			case NvSDP:
 				//sdp
 				layerSdpParse(layer, pre_layer);
 				break;
-			case 3:
+			case NvPDP:
 				//pdp
 				layerPdpParse(layer, pre_layer);
 				break;
-			case 4:
+			case NvSoftmax:
 				layerSoftmaxParse(layer, pre_layer);
 				//softmax
 				
@@ -509,6 +512,7 @@ void  MemoryListParser::buildList()
 			default:
 				printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__,__LINE__, layer->nvdla_type);
 		}
+		debugLayer(layer);
 	} 
         debug_info("%s, %d\n", __FUNCTION__, __LINE__);
 	//alloc mem for task
@@ -545,5 +549,186 @@ void MemoryListParser::debugMemList(void){
 	return ;
 }
 
+void MemoryListParser::debugLayer(Layer * layer){
+	if(!layer){
+		return ;
+	}
+	debug_info("%s, %d\n", __FUNCTION__, __LINE__);
+	switch(layer->nvdla_type){
+		case NvInput:
+		    debug_info("---------------NvInput---------------------\n");
+		    debug_info("*********Input***************\n");
+			debug_info("address = %d\n", layer->surface_desc.src_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.src_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.src_data.height);
+			debug_info("width = %d\n", layer->surface_desc.src_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.src_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.src_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.src_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.src_data.size);
+			debug_info("type = %d\n", layer->surface_desc.src_data.type);
+		    debug_info("*********weight***************\n");
+			debug_info("address = %d\n", layer->surface_desc.weight_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.weight_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.weight_data.height);
+			debug_info("width = %d\n", layer->surface_desc.weight_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.weight_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.weight_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.weight_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.weight_data.size);
+			debug_info("type = %d\n", layer->surface_desc.weight_data.type);
+		    debug_info("*********dst******************\n");
+			debug_info("address = %d\n", layer->surface_desc.dst_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.dst_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.dst_data.height);
+			debug_info("width = %d\n", layer->surface_desc.dst_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.dst_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.dst_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.dst_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.dst_data.size);
+			debug_info("type = %d\n", layer->surface_desc.dst_data.type);
+		    debug_info("-----------------------------------------\n");
+			break;
+		case NvConv:
+		    debug_info("---------------NvConv---------------------\n");
+		    debug_info("*********Input***************\n");
+			debug_info("address = %d\n", layer->surface_desc.src_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.src_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.src_data.height);
+			debug_info("width = %d\n", layer->surface_desc.src_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.src_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.src_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.src_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.src_data.size);
+			debug_info("type = %d\n", layer->surface_desc.src_data.type);
+		    debug_info("*********weight***************\n");
+			debug_info("address = %d\n", layer->surface_desc.weight_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.weight_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.weight_data.height);
+			debug_info("width = %d\n", layer->surface_desc.weight_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.weight_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.weight_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.weight_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.weight_data.size);
+			debug_info("type = %d\n", layer->surface_desc.weight_data.type);
+		    debug_info("*********dst******************\n");
+			debug_info("address = %d\n", layer->surface_desc.dst_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.dst_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.dst_data.height);
+			debug_info("width = %d\n", layer->surface_desc.dst_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.dst_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.dst_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.dst_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.dst_data.size);
+			debug_info("type = %d\n", layer->surface_desc.dst_data.type);
+		    debug_info("-----------------------------------------\n");
+			break;
+		case NvSDP:
+		    debug_info("---------------NvSDP---------------------\n");
+		    debug_info("*********Input***************\n");
+			debug_info("address = %d\n", layer->surface_desc.src_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.src_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.src_data.height);
+			debug_info("width = %d\n", layer->surface_desc.src_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.src_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.src_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.src_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.src_data.size);
+			debug_info("type = %d\n", layer->surface_desc.src_data.type);
+		    debug_info("*********weight***************\n");
+			debug_info("address = %d\n", layer->surface_desc.weight_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.weight_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.weight_data.height);
+			debug_info("width = %d\n", layer->surface_desc.weight_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.weight_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.weight_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.weight_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.weight_data.size);
+			debug_info("type = %d\n", layer->surface_desc.weight_data.type);
+		    debug_info("*********dst******************\n");
+			debug_info("address = %d\n", layer->surface_desc.dst_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.dst_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.dst_data.height);
+			debug_info("width = %d\n", layer->surface_desc.dst_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.dst_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.dst_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.dst_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.dst_data.size);
+			debug_info("type = %d\n", layer->surface_desc.dst_data.type);
+		    debug_info("-----------------------------------------\n");
+			break;
+		case NvPDP:
+		    debug_info("---------------NvPDP---------------------\n");
+		    debug_info("*********Input***************\n");
+			debug_info("address = %d\n", layer->surface_desc.src_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.src_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.src_data.height);
+			debug_info("width = %d\n", layer->surface_desc.src_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.src_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.src_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.src_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.src_data.size);
+			debug_info("type = %d\n", layer->surface_desc.src_data.type);
+		    debug_info("*********weight***************\n");
+			debug_info("address = %d\n", layer->surface_desc.weight_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.weight_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.weight_data.height);
+			debug_info("width = %d\n", layer->surface_desc.weight_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.weight_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.weight_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.weight_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.weight_data.size);
+			debug_info("type = %d\n", layer->surface_desc.weight_data.type);
+		    debug_info("*********dst******************\n");
+			debug_info("address = %d\n", layer->surface_desc.dst_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.dst_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.dst_data.height);
+			debug_info("width = %d\n", layer->surface_desc.dst_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.dst_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.dst_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.dst_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.dst_data.size);
+			debug_info("type = %d\n", layer->surface_desc.dst_data.type);
+		    debug_info("-----------------------------------------\n");
+			break;
+		case NvSoftmax:
+		    debug_info("---------------NvSoftmax---------------------\n");
+		    debug_info("*********Input***************\n");
+			debug_info("address = %d\n", layer->surface_desc.src_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.src_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.src_data.height);
+			debug_info("width = %d\n", layer->surface_desc.src_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.src_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.src_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.src_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.src_data.size);
+			debug_info("type = %d\n", layer->surface_desc.src_data.type);
+		    debug_info("*********weight***************\n");
+			debug_info("address = %d\n", layer->surface_desc.weight_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.weight_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.weight_data.height);
+			debug_info("width = %d\n", layer->surface_desc.weight_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.weight_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.weight_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.weight_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.weight_data.size);
+			debug_info("type = %d\n", layer->surface_desc.weight_data.type);
+		    debug_info("*********dst******************\n");
+			debug_info("address = %d\n", layer->surface_desc.dst_data.address);
+			debug_info("channel = %d\n", layer->surface_desc.dst_data.channel);
+			debug_info("height = %d\n", layer->surface_desc.dst_data.height);
+			debug_info("width = %d\n", layer->surface_desc.dst_data.width);
+			debug_info("line_stride = %d\n", layer->surface_desc.dst_data.line_stride);
+			debug_info("plane_stride = %d\n", layer->surface_desc.dst_data.plane_stride);
+			debug_info("surf_stride = %d\n", layer->surface_desc.dst_data.surf_stride);
+			debug_info("size = %d\n", layer->surface_desc.dst_data.size);
+			debug_info("type = %d\n", layer->surface_desc.dst_data.type);
+		    debug_info("-----------------------------------------\n");
+			break;
+		default:
+			printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__, __LINE__, layer->nvdla_type);
+	}
+	return ;
+}
 
 } /* namespace nvdla */
