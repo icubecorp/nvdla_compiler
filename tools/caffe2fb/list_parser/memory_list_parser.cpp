@@ -40,6 +40,21 @@ MemoryListParser::MemoryListParser(NetParser* net, TaskListParser *tlp) :
 	mTaskListParser(tlp)
 {
     //printf("%s, %d\n", __FUNCTION__, __LINE__);
+    if(mList.size()){
+		printf("%s, %d, mList is not 0!\n", __FUNCTION__, __LINE__);
+		return ;
+    }
+	//alloc mem for struct dla_network_desc
+	nvdla::ILoadable::MemoryListEntry mle;
+	mle.id = 0;
+	mle.alignment = MEM_ALIGNMENT_PAGE;
+	mle.bind_id = 0;
+	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	mle.offsets.push_back(0);
+	mle.size = 0; 
+	mle.tensor_desc_id = 0;
+	mList.push_back(mle);
 }
 
 MemoryListParser::~MemoryListParser()
@@ -651,9 +666,8 @@ void  MemoryListParser::buildList()
 				layerPdpParse(layer, pre_layer);
 				break;
 			case NvSoftmax:
-				layerSoftmaxParse(layer, pre_layer);
 				//softmax
-				
+				layerSoftmaxParse(layer, pre_layer);
 				break;
 			default:
 				printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__,__LINE__, layer->nvdla_type);
