@@ -502,9 +502,11 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	while(mle.contents.size()){
 	   mle.contents.pop_back();
 	}
+	content.str("");
 	content << "task_" << taskentry->id << "_dla_network_desc" << endl;
 	mle.contents.push_back(content.str());
 	mle.offsets.push_back(0);
+	debug_info("%s, %d, mle.contents.size = %d\n", __FUNCTION__, __LINE__, mle.contents.size());
 	mle.size = roundUp(sizeof(struct dla_network_desc), 4); 
 	mle.tensor_desc_id = 0;
 	mList.push_back(mle);
@@ -518,8 +520,10 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	while(mle.contents.size()){
 	   mle.contents.pop_back();
 	}
+	content.str("");
 	content << "task_" << taskentry->id << "_dla_common_op_desc" << endl;
 	mle.contents.push_back(content.str());
+	debug_info("%s, %d, mle.contents.size = %d\n", __FUNCTION__, __LINE__, mle.contents.size());
 	mle.offsets.push_back(0);
 	mle.size = roundUp(sizeof(struct dla_common_op_desc), 4); 
 	mle.tensor_desc_id = 0;
@@ -534,8 +538,10 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	while(mle.contents.size()){
 	   mle.contents.pop_back();
 	}
+	content.str("");
 	content << "task_" << taskentry->id << "_dla_operation_container" << endl;
 	mle.contents.push_back(content.str());
+	debug_info("%s, %d, mle.contents.size = %d\n", __FUNCTION__, __LINE__, mle.contents.size());
 	mle.offsets.push_back(0);
 	mle.size = roundUp(sizeof(union dla_operation_container), 4); 
 	mle.tensor_desc_id = 0;
@@ -550,8 +556,10 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	while(mle.contents.size()){
 	   mle.contents.pop_back();
 	}
+	content.str("");
 	content << "task_" << taskentry->id << "_dla_surface_container" << endl;
 	mle.contents.push_back(content.str());
+	debug_info("%s, %d, mle.contents.size = %d\n", __FUNCTION__, __LINE__, mle.contents.size());
 	mle.offsets.push_back(0);
 	mle.size = roundUp(sizeof(union dla_surface_container), 4); 
 	mle.tensor_desc_id = 0;
@@ -576,6 +584,7 @@ void MemoryListParser::allocMemforEmuTask(ILoadable::TaskListEntry* taskentry){
 	while(mle.contents.size()){
 	   mle.contents.pop_back();
 	}
+	content.str("");
 	content << "task_" << taskentry->id << "_network_desc" << endl;
 	mle.contents.push_back(content.str());
 	mle.offsets.push_back(0);
@@ -592,6 +601,7 @@ void MemoryListParser::allocMemforEmuTask(ILoadable::TaskListEntry* taskentry){
 	while(mle.contents.size()){
 	   mle.contents.pop_back();
 	}
+	content.str("");
 	content << "task_" << taskentry->id << "_operation_container" << endl;
 	mle.contents.push_back(content.str());
 	mle.offsets.push_back(0);
@@ -608,6 +618,7 @@ void MemoryListParser::allocMemforEmuTask(ILoadable::TaskListEntry* taskentry){
 	while(mle.contents.size()){
 	   mle.contents.pop_back();
 	}
+	content.str("");
 	content << "task_" << taskentry->id << "_operation_buffer_container" << endl;
 	mle.contents.push_back(content.str());
 	mle.offsets.push_back(0);
@@ -636,6 +647,7 @@ void  MemoryListParser::buildList()
 	std::vector<Layer*> layers = mNetParserPtr->getLayers();
 	std::vector<ILoadable::TaskListEntry>* TaskList = (std::vector<ILoadable::TaskListEntry>*)(mTaskListParser->getList());
 	nvdla::ILoadable::MemoryListEntry mle;
+	ILoadable::TaskListEntry tle;
 	Layer* layer = NULL;
 	Layer* pre_layer = NULL;
     NvU32 index;
@@ -679,9 +691,14 @@ void  MemoryListParser::buildList()
 		printf("%s, %d, mTaskListParser is NULL, error!\n", __FUNCTION__, __LINE__);
 		return ;
 	}
-	
+	#if 0
 	for(std::vector<ILoadable::TaskListEntry>::iterator tle = TaskList->begin(); tle != TaskList->end(); tle++){
 		taskTypeParse(&tle[0]);
+	}
+	#endif
+	for(index=0; index< (*TaskList).size(); index++){
+		tle = (*TaskList)[index];
+		taskTypeParse(&tle);
 	}
 	return ;
 }
