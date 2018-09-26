@@ -48,7 +48,9 @@ public:
 	void layerSdpParse(Layer* layer, Layer* pre_layer);
 	void layerPdpParse(Layer* layer, Layer* pre_layer);
 	void layerSoftmaxParse(Layer* layer, Layer* pre_layer);
-	void taskTypeParse(ILoadable::Interface task_type);
+	void allocMemforDlaTask(ILoadable::TaskListEntry* taskentry);
+	void allocMemforEmuTask(ILoadable::TaskListEntry* taskentry);
+	void taskTypeParse(ILoadable::TaskListEntry* taskentry);
 	void debugMemList(void);
 	void debugLayer(Layer* layer);
 

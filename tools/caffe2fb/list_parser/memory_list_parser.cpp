@@ -7,6 +7,8 @@
 
 #include "memory_list_parser.h"
 #include "debug.h"
+#include "priv/emu/emu1/A/emu_interface.h"
+#include "dla_interface.h"
 #include <string>
 #include <sstream>
 using namespace std;
@@ -424,13 +426,13 @@ void MemoryListParser::layerPdpParse(Layer* layer, Layer* pre_layer){
 
 void MemoryListParser::layerSoftmaxParse(Layer* layer, Layer* pre_layer){
 	nvdla::ILoadable::MemoryListEntry mle;
-	string content;
-	union dla_layer_param_container layer_input_par;
+	//string content;
+	//union dla_layer_param_container layer_input_par;
         if(layer->nvdla_type != NvSoftmax){
 		printf("%s, %d, layer->nvdla_type = %d, error!\n", __FUNCTION__, __LINE__, layer->nvdla_type);
 		return ;
         }
-	layer_input_par = layer->get_params();
+	//layer_input_par = layer->get_params();
 	//layer_input_par.nv_softmax_params.axis;
 
 	//input
@@ -453,21 +455,172 @@ void MemoryListParser::layerSoftmaxParse(Layer* layer, Layer* pre_layer){
 	layer->surface_desc.weight_data.surf_stride = 0;
 	layer->surface_desc.weight_data.width = 0;
 	//dst
-	layer->surface_desc.dst_data.address = -1;
-	layer->surface_desc.dst_data.channel = 1;
-	layer->surface_desc.dst_data.height = 1;
-	layer->surface_desc.dst_data.plane_stride = 0;
-	//layer->surface_desc.dst_data.type = 0;
-	layer->surface_desc.dst_data.width = 0;
-	layer->surface_desc.dst_data.line_stride = 0;
-	layer->surface_desc.dst_data.surf_stride = 0;
-	layer->surface_desc.dst_data.size =0;
+	layer->dst_mem_flag = 1;
+	layer->surface_desc.dst_data.address = layer->surface_desc.src_data.address;
+	layer->surface_desc.dst_data.channel = layer->surface_desc.src_data.channel;
+	layer->surface_desc.dst_data.height = layer->surface_desc.src_data.height;
+	layer->surface_desc.dst_data.width = layer->surface_desc.src_data.width;
+	layer->surface_desc.dst_data.plane_stride = layer->surface_desc.src_data.plane_stride;
+	layer->surface_desc.dst_data.type = layer->surface_desc.src_data.type;
+	layer->surface_desc.dst_data.line_stride = layer->surface_desc.src_data.line_stride;
+	layer->surface_desc.dst_data.surf_stride = layer->surface_desc.src_data.surf_stride;
+	layer->surface_desc.dst_data.size =layer->surface_desc.src_data.size;
+	//---------fill dst mem entry----------------
+	mle.id = mem_id;
+	mle.alignment = MEM_ALIGNMENT_PAGE;
+	mle.bind_id = 0;
+	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	mle.offsets.push_back(0);
+	mle.size = layer->surface_desc.dst_data.size; 
+	mle.tensor_desc_id = 0;
+	//push mem entry to vector
+	mList.push_back(mle);
+	mem_id++;
 	return ;
 }
 
-void MemoryListParser::taskTypeParse(ILoadable::Interface task_type){
-	if(task_type == ILoadable::Interface_DLA1){
-		//alloc mem for task
+void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
+	nvdla::ILoadable::MemoryListEntry mle;
+	stringstream content;
+	if(!taskentry){
+		printf("%s, %d, taskentry is null!\n", __FUNCTION__, __LINE__);
+		return ;
+	}
+	//alloc mem for struct dla_network_desc
+	mle.id = mem_id;
+	mle.alignment = MEM_ALIGNMENT_PAGE;
+	mle.bind_id = 0;
+	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	while(mle.contents.size()){
+	   mle.contents.pop_back();
+	}
+	content << "task_" << taskentry->id << "_dla_network_desc" << endl;
+	mle.contents.push_back(content.str());
+	mle.offsets.push_back(0);
+	mle.size = roundUp(sizeof(struct dla_network_desc), 4); 
+	mle.tensor_desc_id = 0;
+	mList.push_back(mle);
+	mem_id++;
+	//alloc mem for struct dla_common_op_desc
+	mle.id = mem_id;
+	mle.alignment = MEM_ALIGNMENT_PAGE;
+	mle.bind_id = 0;
+	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	while(mle.contents.size()){
+	   mle.contents.pop_back();
+	}
+	content << "task_" << taskentry->id << "_dla_common_op_desc" << endl;
+	mle.contents.push_back(content.str());
+	mle.offsets.push_back(0);
+	mle.size = roundUp(sizeof(struct dla_common_op_desc), 4); 
+	mle.tensor_desc_id = 0;
+	mList.push_back(mle);
+	mem_id++;
+	//alloc mem for union dla_operation_container
+	mle.id = mem_id;
+	mle.alignment = MEM_ALIGNMENT_PAGE;
+	mle.bind_id = 0;
+	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	while(mle.contents.size()){
+	   mle.contents.pop_back();
+	}
+	content << "task_" << taskentry->id << "_dla_operation_container" << endl;
+	mle.contents.push_back(content.str());
+	mle.offsets.push_back(0);
+	mle.size = roundUp(sizeof(union dla_operation_container), 4); 
+	mle.tensor_desc_id = 0;
+	mList.push_back(mle);
+	mem_id++;
+	//alloc mem for union dla_surface_container
+	mle.id = mem_id;
+	mle.alignment = MEM_ALIGNMENT_PAGE;
+	mle.bind_id = 0;
+	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	while(mle.contents.size()){
+	   mle.contents.pop_back();
+	}
+	content << "task_" << taskentry->id << "_dla_surface_container" << endl;
+	mle.contents.push_back(content.str());
+	mle.offsets.push_back(0);
+	mle.size = roundUp(sizeof(union dla_surface_container), 4); 
+	mle.tensor_desc_id = 0;
+	mList.push_back(mle);
+	mem_id++;
+	return ;
+}
+
+void MemoryListParser::allocMemforEmuTask(ILoadable::TaskListEntry* taskentry){
+	nvdla::ILoadable::MemoryListEntry mle;
+	stringstream content;
+	if(!taskentry){
+		printf("%s, %d, taskentry is null!\n", __FUNCTION__, __LINE__);
+		return ;
+	}
+	//alloc mem for struct emu_network_desc
+	mle.id = mem_id;
+	mle.alignment = MEM_ALIGNMENT_PAGE;
+	mle.bind_id = 0;
+	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	while(mle.contents.size()){
+	   mle.contents.pop_back();
+	}
+	content << "task_" << taskentry->id << "_network_desc" << endl;
+	mle.contents.push_back(content.str());
+	mle.offsets.push_back(0);
+	mle.size = roundUp(sizeof(struct emu_network_desc), 256); 
+	mle.tensor_desc_id = 0;
+	mList.push_back(mle);
+	mem_id++;
+	//alloc mem for union emu_operation_container
+	mle.id = mem_id;
+	mle.alignment = MEM_ALIGNMENT_PAGE;
+	mle.bind_id = 0;
+	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	while(mle.contents.size()){
+	   mle.contents.pop_back();
+	}
+	content << "task_" << taskentry->id << "_operation_container" << endl;
+	mle.contents.push_back(content.str());
+	mle.offsets.push_back(0);
+	mle.size = roundUp(sizeof(union emu_operation_container), 4); 
+	mle.tensor_desc_id = 0;
+	mList.push_back(mle);
+	mem_id++;
+	//alloc mem for union emu_operation_buffer_container
+	mle.id = mem_id;
+	mle.alignment = MEM_ALIGNMENT_PAGE;
+	mle.bind_id = 0;
+	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	while(mle.contents.size()){
+	   mle.contents.pop_back();
+	}
+	content << "task_" << taskentry->id << "_operation_buffer_container" << endl;
+	mle.contents.push_back(content.str());
+	mle.offsets.push_back(0);
+	mle.size = roundUp(sizeof(union emu_operation_buffer_container), 4); 
+	mle.tensor_desc_id = 0;
+	mList.push_back(mle);
+	mem_id++;
+	return ;
+}
+
+
+void MemoryListParser::taskTypeParse(ILoadable::TaskListEntry* taskentry){
+	if(ILoadable::Interface_DLA1 == taskentry->interface){
+		//alloc mem for dla task
+		allocMemforDlaTask(taskentry);
+	}
+	if(ILoadable::Interface_EMU1 == taskentry->interface){
+		//alloc mem for emu task
+		allocMemforEmuTask(taskentry);
 	}
 	return ;
 }
@@ -475,19 +628,21 @@ void MemoryListParser::taskTypeParse(ILoadable::Interface task_type){
 void  MemoryListParser::buildList()
 {
 	std::vector<Layer*> layers = mNetParserPtr->getLayers();
+	std::vector<ILoadable::TaskListEntry>* TaskList = (std::vector<ILoadable::TaskListEntry>*)(mTaskListParser->getList());
 	nvdla::ILoadable::MemoryListEntry mle;
 	Layer* layer = NULL;
 	Layer* pre_layer = NULL;
-        NvU32 index;
-	std::vector<ILoadable::Interface> task_type_list;
-        debug_info("%s, %d\n", __FUNCTION__, __LINE__);
+    NvU32 index;
+	//std::vector<ILoadable::Interface> task_type_list;
+	//const std::vector<NvU16> task_id_list;
+    debug_info("%s, %d\n", __FUNCTION__, __LINE__);
 	//alloc mem for layers
 	for(index = 0 ; index < layers.size(); index++){
 		layer = layers[index];
 		if(index > 0){
 			pre_layer = layers[index-1];
 		}
-                debug_info("%s, %d, index= %d, layer->nvdla_type = %d\n", __FUNCTION__, __LINE__, index, layer->nvdla_type);
+        debug_info("%s, %d, index= %d, layer->nvdla_type = %d\n", __FUNCTION__, __LINE__, index, layer->nvdla_type);
 		switch(layer->nvdla_type){
 			case NvInput:
 				layerInputParse(layer);
@@ -514,15 +669,14 @@ void  MemoryListParser::buildList()
 		}
 		debugLayer(layer);
 	} 
-        debug_info("%s, %d\n", __FUNCTION__, __LINE__);
 	//alloc mem for task
 	if(mTaskListParser == NULL){
 		printf("%s, %d, mTaskListParser is NULL, error!\n", __FUNCTION__, __LINE__);
 		return ;
 	}
-	task_type_list = mTaskListParser->get_tasks_type();
-	for(ILoadable::Interface idx : task_type_list){
-		taskTypeParse(idx);
+	
+	for(std::vector<ILoadable::TaskListEntry>::iterator tle = TaskList->begin(); tle != TaskList->end(); tle++){
+		taskTypeParse(&tle[0]);
 	}
 	return ;
 }
