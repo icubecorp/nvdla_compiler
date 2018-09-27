@@ -9,6 +9,7 @@
 #define TASK_LIST_PARSER_H_
 
 #include "list_entry_parser.h"
+#include "debug.h"
 
 namespace nvdla {
 
@@ -36,6 +37,8 @@ public:
 	}
 
 	void fillAddressList();
+	void taskTypeParser(Layer* layer, Layer* pre_layer, NvU32* typecount, NvU32* tasktype);
+	void debugTaskList(void);
 
 private:
 	std::vector<ILoadable::TaskListEntry> mList;
