@@ -15,6 +15,14 @@ NvdlaConv::NvdlaConv()
     nvdla_type = NvConv;
     conv_mode = CONV_MODE_DIRECT;
     set_bpe(2);
+    kernel_w = -1;
+    kernel_h = -1;
+    dilation_w = 1;
+    dilation_h = 1;
+    stride_w = 1;
+    stride_h = 1;
+    pad_w = 0;
+    pad_h = 0;
 }
 
 NvdlaConv::~NvdlaConv()
@@ -72,7 +80,6 @@ void NvdlaConv::print_layer_info(void)
         debug_info("index=%d,data=%f\n",i,data[i]);
     }
     #endif
-    
 
 }
 
@@ -122,11 +129,16 @@ union dla_operation_container NvdlaConv::fill_dla_op_des(void)
     dla_op_desc.conv_op.input_width_csc = surface_desc.src_data.width;
     dla_op_desc.conv_op.input_height_csc = surface_desc.src_data.height;
     dla_op_desc.conv_op.input_channel_csc = surface_desc.src_data.channel;
+    dla_op_desc.conv_op.kernel_channel_csc = surface_desc.src_data.channel;
+    dla_op_desc.conv_op.kernel_width_csc = surface_desc.weight_data.width;
+    dla_op_desc.conv_op.kernel_height_csc = surface_desc.weight_data.height;
     dla_op_desc.conv_op.input_width_cmac = surface_desc.dst_data.width;
     dla_op_desc.conv_op.input_height_cmac = surface_desc.dst_data.height;
-    dla_op_desc.conv_op.bytes_per_kernel = surface_desc.weight_data.size / num_output;
+    dla_op_desc.conv_op.bytes_per_kernel = weight_data_size * get_bpe() / num_output;
     dla_op_desc.conv_op.conv_stride_x = stride_w;
     dla_op_desc.conv_op.conv_stride_y = stride_h;
+    dla_op_desc.conv_op.dilation_x = dilation_w;
+    dla_op_desc.conv_op.dilation_y = dilation_h;
     dla_op_desc.conv_op.pad_x_left = pad_w;
     dla_op_desc.conv_op.pad_x_right = pad_w;
     dla_op_desc.conv_op.pad_y_bottom = pad_h;

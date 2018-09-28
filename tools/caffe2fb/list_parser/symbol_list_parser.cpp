@@ -9,6 +9,8 @@
 #include "debug.h"
 #include <stdlib.h>
 #include "nvdla/ILoadable.h"
+#include <string.h>
+using namespace std;
 
 namespace nvdla {
 
@@ -273,7 +275,6 @@ void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_e
         op_data = op_data + sizeof(union dla_operation_container);
         memcpy(surface_data, &surface_desc, sizeof(union dla_surface_container));
         surface_data = surface_data + sizeof(union dla_surface_container);
-        
     }
     mList.push_back(task_op_list_blob);
     mList.push_back(task_surf_desc_blob);
@@ -314,16 +315,71 @@ void SymbolListParser::buildList() {
 
 void SymbolListParser::dump_blobs_info(void){
     priv::Loadable::Symbol symbol;
+    std::vector<ILoadable::TaskListEntry> *task_list = (std::vector<ILoadable::TaskListEntry> *)mTaskListParserPtr->getList();
+    debug_info("%s line=%d task_size=%d\n",__FUNCTION__,__LINE__,task_list->size());
+    ILoadable::TaskListEntry nvdla_task_entry;
+    if(task_list->empty()) {
+        log_error("task list is empty\n");
+        return;
+    }
+    nvdla_task_entry = (*task_list)[0];// fix to nvdla_task
+    uint16_t first_layer = nvdla_task_entry.preactions[0];
+    uint16_t last_layer = nvdla_task_entry.postactions[0];
+    std::vector<Layer*> layers = mNetParserPtr->getLayers();
+    Layer *layer;
     for(unsigned int i = 0; i < mList.size(); i++){
         symbol = mList[i];
         NvU8 *data = symbol.data;
         debug_info("name=%s\n",symbol.name.c_str());
         debug_info("start to dump size=%d\n", symbol.size);
-        for(unsigned int j = 0; j < symbol.size; j = j+16){
-            for(int m = 0; m < 16; m++){
-                debug_info("0x%x  ",*data++);
+        
+        if(symbol.name.find("task_0_surf_list") != string::npos){
+            for(int j = first_layer; j < last_layer; j++){
+                layer = layers[j];
+                switch(layer->nvdla_type){
+                    case NvConv:
+                        debug_info_conv_surface_desc((struct dla_conv_surface_desc *)data, 0);
+                        break;
+                    case NvSDP:
+                        debug_info_sdp_surface_desc((struct dla_sdp_surface_desc *)data,0);
+                        break;
+                    case NvPDP:
+                        debug_info_pdp_surface_desc((struct dla_pdp_surface_desc *)data,0);
+                        break;
+                    default:
+                        log_error("no such layer->nvdla_type %s line=%d",__FUNCTION__,__LINE__);
+                        break;
+                }
+                data = data + sizeof(union dla_surface_container);
             }
-            debug_info("\n");
+        }
+        else if(symbol.name.find("task_0_op_list") != string::npos){
+            for(int j = first_layer; j <= last_layer; j++){
+                layer = layers[j];
+                switch(layer->nvdla_type){
+                    case NvConv:
+                        debug_info_conv_op_desc((struct dla_conv_op_desc *)data, 0);
+                        break;
+                    case NvSDP:
+                        debug_info_sdp_op_desc((struct dla_sdp_op_desc *)data,0);
+                        break;
+                    case NvPDP:
+                        debug_info_pdp_op_desc((struct dla_pdp_op_desc *)data,0);
+                        break;
+                    default:
+                        log_error("no such layer->nvdla_type %s line=%d",__FUNCTION__,__LINE__);
+                        break;
+                }
+                data = data + sizeof(union dla_operation_container);
+            }            
+        }
+        else{
+            for(unsigned int j = 0; j < symbol.size; j = j+16){
+                for(int m = 0; m < 16; m++){
+                    debug_info("0x%x  ",*data++);
+                }
+                debug_info("\n");
+            }
         }
     }
 

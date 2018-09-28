@@ -96,8 +96,8 @@ union dla_operation_container NvdlaPDP::fill_dla_op_des(void)
             break;
 
     }
-    dla_op_desc.pdp_op.pool_width = kernel_w;
-    dla_op_desc.pdp_op.pool_height = kernel_h;
+    dla_op_desc.pdp_op.pool_width = kernel_w - 1;
+    dla_op_desc.pdp_op.pool_height = kernel_h - 1;
     dla_op_desc.pdp_op.stride_x = stride_w;
     dla_op_desc.pdp_op.stride_y = stride_h;
     dla_op_desc.pdp_op.pad_left = pad_left;

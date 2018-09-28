@@ -83,12 +83,12 @@ int InnerProduct::convert_to_nvdla_layer(std::vector<Layer *> *nvdla_layers)
     paras.push_back(num_output);
     paras.push_back(-1);
     paras.push_back(-1);
-    paras.push_back(-1);
-    paras.push_back(-1);
-    paras.push_back(-1);
-    paras.push_back(-1);
-    paras.push_back(-1);
-    paras.push_back(-1);
+    paras.push_back(1);
+    paras.push_back(1);
+    paras.push_back(1);
+    paras.push_back(1);
+    paras.push_back(0);
+    paras.push_back(0);
     paras.push_back(bias_term);
     paras.push_back(weight_data_size);
     if(!layer)
