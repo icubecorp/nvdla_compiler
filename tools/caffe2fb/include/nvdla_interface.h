@@ -4,7 +4,8 @@
 
 
 //some configure for nvdla large 
-#define ATOMIC_C_SIZE   32
+#define ATOMIC_C_SIZE   128 //for half-float and weight data for conv direct mode
+#define GROUP_KERNEL_NUM   16 //for half-float
 
 
 

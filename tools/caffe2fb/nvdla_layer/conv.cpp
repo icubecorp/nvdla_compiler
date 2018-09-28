@@ -90,6 +90,7 @@ union dla_layer_param_container NvdlaConv::get_params(void)
     params.nv_conv_params.stride_h = stride_h;
     params.nv_conv_params.stride_w = stride_w;
     params.nv_conv_params.weight_data_size = weight_data_size;
+    params.nv_conv_params.weight_data = weight_data.data;
     return params;
 }
 

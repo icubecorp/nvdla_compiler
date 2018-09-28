@@ -29,26 +29,64 @@ const void* SymbolListParser::getList() const {
 }
 
 
-int SymbolListParser::get_offset(uint16_t a, uint16_t w, uint16_t h, uint16_t k, 
-                                    uint16_t c,  struct nvdla_meta_data meta_data)
+int SymbolListParser::get_offset(uint16_t k, uint16_t c, uint16_t h, uint16_t w, struct nvdla_meta_data meta_data)
 {
     int offset = -1;
+    uint16_t group_num_sum;
+    uint16_t group_num_cur;
+    uint16_t group_kernel_num_cur;
+    int group_size;
+    
+    uint16_t atomic_num_sum;
+    uint16_t atomic_num_cur;
+    uint16_t atomic_size_cur;
+    //uint16_t atomic_size_reminder;
     switch (meta_data.data_format){
         case WEIGHT_CAFFEMODE:
             offset = k * meta_data.channel * meta_data.height* meta_data.width + \
-                        (a * ATOMIC_C_SIZE + c) * meta_data.height * meta_data.width + \
-                        h*meta_data.width + w;
-                        
+                     c * meta_data.height * meta_data.width + \
+                     h * meta_data.width + w;
             break;
+        //for direct conv mode, the memeory data sequence atomic_c -> k -> w -> h -> atomic_num -> group
         case WEIGHT_DIRECT_CONV:
-            offset = a * meta_data.height* meta_data.width * meta_data.kernel_num * ATOMIC_C_SIZE + \
-                        h * meta_data.width * meta_data.kernel_num * meta_data.dynamic_atomic_size + \
-                        w * meta_data.kernel_num *  meta_data.dynamic_atomic_size + \
-                        k *  meta_data.dynamic_atomic_size + c;
-            offset = offset * meta_data.bpe;
+             atomic_size_cur = ATOMIC_C_SIZE;
+             atomic_num_sum = roundUp(meta_data.channel * meta_data.bpe, ATOMIC_C_SIZE) /  ATOMIC_C_SIZE;
+             atomic_num_cur = roundUp((c + 1) * meta_data.bpe, ATOMIC_C_SIZE) /  ATOMIC_C_SIZE;
+             //atomic_size_reminder = ((meta_data.channel * meta_data.bpe)% ATOMIC_C_SIZE);
+             //atomic_size_reminder = atomic_size_reminder == 0 ? ATOMIC_C_SIZE : atomic_size_reminder;
+             if(atomic_num_cur == atomic_num_sum){
+                atomic_size_cur = ((meta_data.channel * meta_data.bpe)% ATOMIC_C_SIZE);
+                atomic_size_cur = atomic_size_cur == 0 ? ATOMIC_C_SIZE : atomic_size_cur;
+             }
+             else
+                atomic_size_cur = ATOMIC_C_SIZE;
+
+             group_num_sum = roundUp(meta_data.kernel_num, GROUP_KERNEL_NUM) /  GROUP_KERNEL_NUM;
+             group_num_cur = roundUp(k + 1, GROUP_KERNEL_NUM) /  GROUP_KERNEL_NUM;
+             //group_size = (atomic_num_sum - 1) * meta_data.height* meta_data.width * ATOMIC_C_SIZE * GROUP_KERNEL_NUM + 
+             //               meta_data.height* meta_data.width * atomic_size_reminder * GROUP_KERNEL_NUM;
+             group_size =  meta_data.height * meta_data.width * meta_data.channel * meta_data.bpe * GROUP_KERNEL_NUM;
+             
+             if(group_num_cur == group_num_sum){
+                group_kernel_num_cur = (meta_data.kernel_num % GROUP_KERNEL_NUM);
+                group_kernel_num_cur = group_kernel_num_cur == 0 ? GROUP_KERNEL_NUM : group_kernel_num_cur;
+             }
+             else
+                group_kernel_num_cur = GROUP_KERNEL_NUM;
+             
+             offset =   (group_num_cur - 1) * group_size + \
+                        (atomic_num_cur - 1) * meta_data.height* meta_data.width * group_kernel_num_cur * ATOMIC_C_SIZE + \
+                        h * meta_data.width * group_kernel_num_cur * atomic_size_cur + \
+                        w * group_kernel_num_cur *  atomic_size_cur + \
+                        (k - GROUP_KERNEL_NUM *(group_num_cur - 1))* atomic_size_cur + (c * meta_data.bpe) % ATOMIC_C_SIZE;
+            #if 0
+            debug_info("atomic_size_cur=%d,atomic_num_sum=%d,atomic_num_cur=%d,kernel_num=%d, \
+                       k=%d,c=%d,h=%d,w=%d,offset=%d  group_num_sum=%d,group_num_cur=%d,group_kernel_num_cur=%d,group_size=%d\n",atomic_size_cur,\
+                    atomic_num_sum,atomic_num_cur,meta_data.kernel_num,k,c,h,w,offset,group_num_sum,group_num_cur,group_kernel_num_cur,group_size); 
+            #endif
             break;
         case WEIGHT_BIAS:
-            offset = (c * meta_data.width * meta_data.height + h * meta_data.width + w) * meta_data.bpe;
+            offset = (c * meta_data.width * meta_data.height *meta_data.bpe  + h * meta_data.width + w) ;
             break;
         default:
             printf("error not such format =%d \n",meta_data.data_format);
@@ -81,9 +119,9 @@ void *SymbolListParser::fill_bias_weight_data(Layer * layer){
                 meta_data.height = height;
                 meta_data.bpe = bpe;
                 meta_data.data_format = WEIGHT_CAFFEMODE;
-                woffset = get_offset(0, w, h, 0, c, meta_data);
+                woffset = get_offset(0, c, h, w, meta_data);
                 meta_data.data_format = WEIGHT_BIAS;
-                doffset =  get_offset(0, w, h, 0, c, meta_data);
+                doffset =  get_offset(0, c, h, w, meta_data);
                 if (doffset < 0){
                     printf("error doffset < 0 \n");
                     return NULL;
@@ -97,11 +135,12 @@ void *SymbolListParser::fill_bias_weight_data(Layer * layer){
                 *outp = half_float::half(*inp);                
 
             }
+      //debug_info("woffset=%d,doffset=%d\n",woffset, doffset);
       return data;
 }
 
 
-//for direct conv mode, the memeory data sequence atomic_c -> k -> w -> h -> atomic_num
+
 void *SymbolListParser::fill_conv_weight_data(Layer * layer){
 
     struct dla_surface_desc surface_desc = layer->surface_desc;
@@ -113,46 +152,36 @@ void *SymbolListParser::fill_conv_weight_data(Layer * layer){
     uint16_t width = surface_desc.weight_data.width;
     uint16_t height = surface_desc.weight_data.height;
     uint16_t kernel_num = surface_desc.dst_data.channel; // kernel num
-    uint16_t c = surface_desc.weight_data.channel;
-    uint16_t atomic_size = ATOMIC_C_SIZE;
-    uint16_t atomic_num = roundUp(c * bpe, ATOMIC_C_SIZE) /  ATOMIC_C_SIZE;
+    uint16_t channel = surface_desc.weight_data.channel;
     int doffset = 0;
     int woffset = 0;
     struct nvdla_meta_data meta_data;
-    for(uint16_t a = 0; a < atomic_num; a++)
-        for(uint16_t h =0 ; h < height; h++)
-            for(uint16_t w = 0; w < width; w++)
-                for(uint16_t k = 0; k < kernel_num; k++)
-                {
-                    if(atomic_num == (a + 1))
-                        atomic_size = c % ATOMIC_C_SIZE;
-                    else
-                        atomic_size = ATOMIC_C_SIZE;
-                    for(uint16_t size = 0; size < atomic_size ;size++)
-                    {   
-                        meta_data.channel = c;
-                        meta_data.width = width;
-                        meta_data.height = height;
-                        meta_data.kernel_num = kernel_num;
-                        meta_data.bpe = bpe;
-                        meta_data.data_format = WEIGHT_DIRECT_CONV;
-                        meta_data.dynamic_atomic_size = atomic_size;
-                        doffset= get_offset(a, h, w, k, size, meta_data);
-                        meta_data.data_format = WEIGHT_CAFFEMODE;
-                        woffset = get_offset(a, h, w, k, size, meta_data);
-                        if (doffset < 0){
-                            printf("error doffset < 0 \n");
-                            return NULL;
-                        }
-                        if (woffset < 0){
-                            printf("error woffset < 0 \n");
-                            return NULL;
-                        }
-                        float* inp = weight_data + woffset;
-                        half_float::half* outp = reinterpret_cast<half_float::half*>(data + doffset);
-                        *outp = half_float::half(*inp);
+    debug_info("kernel_num=%d, channel=%d,width=%d,height=%d\n",kernel_num,channel,width,height);
+    for(uint16_t k = 0; k < kernel_num; k++)
+        for(uint16_t c = 0; c < channel; c++)
+            for(uint16_t h =0 ; h < height; h++)
+                for(uint16_t w = 0; w < width; w++){
+                    meta_data.channel = channel;
+                    meta_data.width = width;
+                    meta_data.height = height;
+                    meta_data.kernel_num = kernel_num;
+                    meta_data.bpe = bpe;
+                    meta_data.data_format = WEIGHT_DIRECT_CONV;
+                    doffset= get_offset(k, c, h, w, meta_data);
+                    meta_data.data_format = WEIGHT_CAFFEMODE;
+                    woffset = get_offset(k, c, h, w, meta_data);
+                    if (doffset < 0){
+                        printf("error doffset < 0 \n");
+                        return NULL;
                     }
-                        
+                    if (woffset < 0){
+                        printf("error woffset < 0 \n");
+                        return NULL;
+                    }
+                    float* inp = weight_data + woffset;
+                    half_float::half* outp = reinterpret_cast<half_float::half*>(data + doffset);
+                    *outp = half_float::half(*inp);
+                    //debug_info("woffset=%d,doffset=%d w_data=%f m_data=0x%x\n",woffset, doffset,*inp,*(unsigned short*) outp); 
                 }
     return data;
 }
@@ -161,6 +190,7 @@ void *SymbolListParser::fill_conv_weight_data(Layer * layer){
 void SymbolListParser::fill_weight_blobs(std::vector<priv::Loadable::Symbol> *mlist,
         NetParser* net, MemoryListParser* memory_parser){
 
+    debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
     std::vector<Layer*> layers = mNetParserPtr->getLayers();
     const std::vector<ILoadable::MemoryListEntry> *mem_list =  \
             (const std::vector<ILoadable::MemoryListEntry> *)memory_parser->getList();
@@ -171,13 +201,14 @@ void SymbolListParser::fill_weight_blobs(std::vector<priv::Loadable::Symbol> *ml
     struct dla_surface_desc surface_desc;
     for(unsigned int i = 0; i < layers.size(); i++){
         layer = layers[i];
-        if( layer->weight_mem_flag ){
-            
+        if( layer->weight_mem_flag == 1 ){
             surface_desc = layer->surface_desc;
             mem_id = surface_desc.weight_data.address;
             mem_list_entry = (*mem_list)[mem_id];
+            debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
             blob.name = mem_list_entry.contents[0];
             blob.size = mem_list_entry.size;
+            debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
             debug_info("blob name=%s,size=%d,mem_id=%d\n",blob.name.c_str(),blob.size,mem_id);
             switch (layer->nvdla_type){
                 case NvConv:
@@ -198,26 +229,39 @@ void SymbolListParser::fill_weight_blobs(std::vector<priv::Loadable::Symbol> *ml
 
 }
 
+void* SymbolListParser::fill_emu_taskinfo_blob(void){
+
+    return NULL;
+}
+
+
+void* SymbolListParser::fill_nvdla_taskinfo_blob(void){
+
+    return NULL;
+
+}
+
 
 
 void SymbolListParser::fill_taskinfo_blobs(std::vector<priv::Loadable::Symbol> *mlist,
-                MemoryListParser* memory_parser, TaskListParser* task_parser){
-                
-                std::vector<ILoadable::TaskListEntry> *task_list = (std::vector<ILoadable::TaskListEntry> *)task_parser->getList();
-                ILoadable::TaskListEntry task_entry;
-                priv::Loadable::Symbol blob;
-                for(unsigned int i = 0; i < task_list->size(); i++){
-                    task_entry = (*task_list)[i];
-                    switch (task_entry.interface){
-                        case ILoadable::Interface_DLA1:
-                            break;
-                        case ILoadable::Interface_EMU1:
-                            break;
-                        default:
-                            printf("error not such task type=%d for blobs\n",task_entry.interface);
-                            break;
-                    }
-                }
+    MemoryListParser* memory_parser, TaskListParser* task_parser){
+    std::vector<ILoadable::TaskListEntry> *task_list = (std::vector<ILoadable::TaskListEntry> *)task_parser->getList();
+    ILoadable::TaskListEntry task_entry;
+    priv::Loadable::Symbol blob;
+    for(unsigned int i = 0; i < task_list->size(); i++){
+        task_entry = (*task_list)[i];
+        switch (task_entry.interface){
+        case ILoadable::Interface_DLA1:
+            blob.data = (NvU8 *)fill_nvdla_taskinfo_blob();
+            break;
+        case ILoadable::Interface_EMU1:
+            blob.data = (NvU8 *)fill_emu_taskinfo_blob();
+            break;
+        default:
+            printf("error not such task type=%d for blobs\n",task_entry.interface);
+            break;
+        }
+    }
 }
 
 
@@ -227,6 +271,7 @@ void SymbolListParser::buildList() {
         printf("Warning: list only build for once\n");
         return;
     }
+    
     fill_weight_blobs(&mList, mNetParserPtr, mMemoryListParserPtr);
 }
 
@@ -235,9 +280,14 @@ void SymbolListParser::dump_blobs_info(void){
     for(unsigned int i = 0; i < mList.size(); i++){
         symbol = mList[i];
         NvU8 *data = symbol.data;
-        debug_info("name=%s,size=%d\n",symbol.name.c_str(), symbol.size);
-        for(unsigned int j = 0; j < symbol.size; j++)
-            debug_info("0x%x ",*data++);
+        debug_info("name=%s\n",symbol.name.c_str());
+        debug_info("start to dump size=%d\n", symbol.size);
+        for(unsigned int j = 0; j < symbol.size; j = j+16){
+            for(int m = 0; m < 16; m++){
+                debug_info("0x%x  ",*data++);
+            }
+            debug_info("\n");
+        }
     }
 
 }

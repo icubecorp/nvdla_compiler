@@ -39,6 +39,8 @@ static int roundUp(int numToRound, int multiple)
             MemoryListParser* memory_parser);
     void fill_taskinfo_blobs(std::vector<priv::Loadable::Symbol> *mlist,\
             MemoryListParser* memory_parser, TaskListParser* task_parser);
+    void* fill_nvdla_taskinfo_blob(void);
+    void* fill_emu_taskinfo_blob(void);
     void* fill_conv_weight_data(Layer * layer);
     void* fill_bias_weight_data(Layer * layer);
     void dump_blobs_info(void);
@@ -55,8 +57,7 @@ static int roundUp(int numToRound, int multiple)
         int bpe;
         int dynamic_atomic_size;
     };
-    int get_offset(uint16_t a, uint16_t w, uint16_t h, uint16_t k,\
-                                    uint16_t c,  struct nvdla_meta_data meta_data);
+    int get_offset(uint16_t k, uint16_t c, uint16_t h, uint16_t w, struct nvdla_meta_data meta_data);
 private:
 
 	std::vector<priv::Loadable::Symbol> mList;
