@@ -51,6 +51,9 @@ public:
 	void allocMemforDlaTask(ILoadable::TaskListEntry* taskentry);
 	void allocMemforEmuTask(ILoadable::TaskListEntry* taskentry);
 	void taskTypeParse(ILoadable::TaskListEntry* taskentry);
+	void fillTaskAddrList(void);
+	void getNetWorkDescMemId(NvU16 task_id, NvU16* mem_id);
+	void getMemId(NvU16 task_id, std::vector<NvU16>* mem_id_list);
 	void debugMemList(void);
 	void debugLayer(Layer* layer);
 

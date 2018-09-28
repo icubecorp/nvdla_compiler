@@ -271,6 +271,9 @@ void TaskListParser::debugTaskList(void){
 		for(i=0; i<tle.postactions.size(); i++){
 			debug_info("tle.postactions[%d] = %d\n", i, tle.postactions[i]);
 		}
+		for(i=0; i<tle.address_list.size(); i++){
+			debug_info("tle.address_list[%d] = %d\n", i, tle.address_list[i]);
+		}
 		debug_info("-------------------------\n");
 	}
 	return ;

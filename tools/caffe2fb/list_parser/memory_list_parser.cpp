@@ -44,13 +44,13 @@ MemoryListParser::MemoryListParser(NetParser* net, TaskListParser *tlp) :
 		printf("%s, %d, mList is not 0!\n", __FUNCTION__, __LINE__);
 		return ;
     }
-	//alloc mem for struct dla_network_desc
+	//alloc mem for mem_id = 0
 	nvdla::ILoadable::MemoryListEntry mle;
 	mle.id = 0;
 	mle.alignment = MEM_ALIGNMENT_PAGE;
 	mle.bind_id = 0;
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
-	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC;
 	mle.offsets.push_back(0);
 	mle.size = 0; 
 	mle.tensor_desc_id = 0;
@@ -514,7 +514,7 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	   mle.contents.pop_back();
 	}
 	content.str("");
-	content << "task_" << taskentry->id << "_dla_network_desc" << endl;
+	content << "task_" << taskentry->id << "_network_desc" << endl;
 	mle.contents.push_back(content.str());
 	while(mle.offsets.size()){
 	   mle.offsets.pop_back();
@@ -615,6 +615,7 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	   mle.contents.pop_back();
 	}
 	content.str("");
+	content << "task_" << taskentry->id << endl;
 	mle.contents.push_back(content.str());
 	while(mle.offsets.size()){
 	   mle.offsets.pop_back();
@@ -706,6 +707,7 @@ void MemoryListParser::allocMemforEmuTask(ILoadable::TaskListEntry* taskentry){
 		   mle.contents.pop_back();
 		}
 		content.str("");
+		content << "task_" << taskentry->id << endl;
 		mle.contents.push_back(content.str());
 		while(mle.offsets.size()){
 		   mle.offsets.pop_back();
@@ -784,6 +786,116 @@ void  MemoryListParser::buildList()
 	for(index=0; index< (*TaskList).size(); index++){
 		tle = (*TaskList)[index];
 		taskTypeParse(&tle);
+	}
+	return ;
+}
+
+void MemoryListParser::getNetWorkDescMemId(NvU16 task_id, NvU16* mem_id){
+	if(!(mList.size())){
+		printf("%s, %d, MemoryListEntry is NULL!\n", __FUNCTION__, __LINE__);
+		return ;
+	}
+	if(!mem_id){
+		printf("%s, %d, parameter is NULL!\n", __FUNCTION__, __LINE__);
+		return ;
+	}
+	
+	ILoadable::MemoryListEntry mle;
+	stringstream content;
+	content.str("");
+	content << "task_" << task_id << "_network_desc" <<endl;
+	
+	for(NvU32 index=0; index<mList.size(); index++){
+		mle = mList[index];
+		//find the task network desc
+		for(NvU32 i=0; i<mle.contents.size(); i++){
+			if(mle.contents[i] == content.str()){
+				debug_info("%s, %d, mle.id = %d, content = %s\n", __FUNCTION__, __LINE__, mle.id, mle.contents[i].c_str());
+				*mem_id = mle.id;
+				return ;
+			}
+		}
+		
+	}
+	return ;
+}
+
+void MemoryListParser::getMemId(NvU16 task_id, vector<NvU16>* mem_id_list){
+	if(!mem_id_list){
+		printf("%s, %d, parameter is NULL!\n", __FUNCTION__, __LINE__);
+		return ;
+	}
+	if(!(mList.size())){
+		printf("%s, %d, MemoryListEntry is NULL!\n", __FUNCTION__, __LINE__);
+		return ;
+	}
+	NvU16 mem_id = 0;
+	ILoadable::MemoryListEntry mle;
+	NvU32 index;
+	NvU32 i;
+
+	while((*mem_id_list).size()){
+		(*mem_id_list).pop_back();
+	}
+	
+	//task  network desc id
+	getNetWorkDescMemId(task_id, &mem_id);
+	//push the mem id in vector
+	(*mem_id_list).push_back(mem_id);
+
+	debug_info("%s, %d, mem_id = %d\n", __FUNCTION__, __LINE__, mem_id);
+
+	for(index=0; index<mList.size(); index++){
+		mle = mList[index];
+		//push all the mem id except the firt network desc id 
+		if(mle.id != mem_id){
+			(*mem_id_list).push_back(mle.id);
+		}
+		
+	}
+	
+	//remove the mem id which belong the other task
+	for(index=0; index<mList.size(); index++){
+		mle = mList[index];
+		for(i=0; i<(mle.contents.size()); i++){
+			std::size_t found = mle.contents[i].find("task");
+			if(found == std::string::npos){
+				continue;
+			}
+			
+			found = mle.contents[i].find(std::to_string(task_id));
+			if(found != std::string::npos){
+				continue;
+			}
+			
+			for(std::vector<NvU16>::iterator iter = (*mem_id_list).begin(); iter != (*mem_id_list).end(); ){
+				if(*iter == mle.id){
+					(*mem_id_list).erase(iter);
+				}else{
+					iter++;
+				}
+			}
+		}
+	}
+	debug_info("%s, %d, (*mem_id_list).size = %d\n", __FUNCTION__, __LINE__, (*mem_id_list).size());
+	return ;
+}
+
+void MemoryListParser::fillTaskAddrList(void){
+	ILoadable::TaskListEntry* tle = NULL;
+	NvU32 task_index = 0;
+	vector<ILoadable::TaskListEntry>* task_list = (vector<ILoadable::TaskListEntry>*)mTaskListParser->getList();
+
+	if(!mTaskListParser){
+		printf("%s, %d, mTaskListParser is NULL!\n", __FUNCTION__, __LINE__);
+		return ;
+	}
+	for(task_index=0; task_index<(*task_list).size(); task_index++){
+		tle = &((*task_list)[task_index]);
+		while(tle->address_list.size()){
+			tle->address_list.pop_back();
+		}
+		getMemId(tle->id, &(tle->address_list));
 	}
 	return ;
 }
