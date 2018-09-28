@@ -535,7 +535,7 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	   mle.contents.pop_back();
 	}
 	content.str("");
-	content << "task_" << taskentry->id << "_dla_dep_graph" << endl;
+	content << "task_" << taskentry->id << "_dep_graph" << endl;
 	mle.contents.push_back(content.str());
 	while(mle.offsets.size()){
 	   mle.offsets.pop_back();
@@ -555,7 +555,7 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	   mle.contents.pop_back();
 	}
 	content.str("");
-	content << "task_" << taskentry->id << "_dla_op_list" << endl;
+	content << "task_" << taskentry->id << "_op_list" << endl;
 	mle.contents.push_back(content.str());
 	while(mle.offsets.size()){
 	   mle.offsets.pop_back();
@@ -575,7 +575,7 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	   mle.contents.pop_back();
 	}
 	content.str("");
-	content << "task_" << taskentry->id << "_dla_surf_list" << endl;
+	content << "task_" << taskentry->id << "_surf_list" << endl;
 	mle.contents.push_back(content.str());
 	while(mle.offsets.size()){
 	   mle.offsets.pop_back();
@@ -595,7 +595,7 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	   mle.contents.pop_back();
 	}
 	content.str("");
-	content << "task_" << taskentry->id << "_dla_lut_list" << endl;
+	content << "task_" << taskentry->id << "_lut_list" << endl;
 	mle.contents.push_back(content.str());
 	while(mle.offsets.size()){
 	   mle.offsets.pop_back();
@@ -845,15 +845,13 @@ void MemoryListParser::getMemId(NvU16 task_id, vector<NvU16>* mem_id_list){
 
 	debug_info("%s, %d, mem_id = %d\n", __FUNCTION__, __LINE__, mem_id);
 
-	for(index=0; index<mList.size(); index++){
+	//mem id 0 not need to push
+	for(index=1; index<mList.size(); index++){
 		mle = mList[index];
-		//push all the mem id except the firt network desc id 
-		if(mle.id != mem_id){
-			(*mem_id_list).push_back(mle.id);
-		}
-		
+		(*mem_id_list).push_back(mle.id);
 	}
 	
+	debug_info("%s, %d, (*mem_id_list).size = %d\n", __FUNCTION__, __LINE__, (*mem_id_list).size());
 	//remove the mem id which belong the other task
 	for(index=0; index<mList.size(); index++){
 		mle = mList[index];
@@ -883,7 +881,11 @@ void MemoryListParser::getMemId(NvU16 task_id, vector<NvU16>* mem_id_list){
 
 void MemoryListParser::fillTaskAddrList(void){
 	ILoadable::TaskListEntry* tle = NULL;
+	ILoadable::MemoryListEntry * mle = NULL;
+	stringstream content;
 	NvU32 task_index = 0;
+	NvU16 i,j,k;
+	std::size_t found;
 	vector<ILoadable::TaskListEntry>* task_list = (vector<ILoadable::TaskListEntry>*)mTaskListParser->getList();
 
 	if(!mTaskListParser){
@@ -896,6 +898,52 @@ void MemoryListParser::fillTaskAddrList(void){
 			tle->address_list.pop_back();
 		}
 		getMemId(tle->id, &(tle->address_list));
+
+		//dla task need to modify mem size
+		if(tle->interface == ILoadable::Interface_DLA1){
+			for(i=0; i<tle->preactions.size(); i++){
+				//task_0_dep_graph
+				for(j=0; j<mList.size(); j++){
+					mle = &mList[j];
+					content.str("");
+					content << "task_" << tle->id << "_dep_graph" <<endl;
+					for(k=0; k<mle->contents.size(); k++){
+						found = mle->contents[k].find(content.str());
+						if(found == std::string::npos){
+							continue;
+						}
+						mle->size = mle->size * tle->postactions[i];
+					}
+				}
+				//task_0_op_list
+				for(j=0; j<mList.size(); j++){
+					mle = &mList[j];
+					content.str("");
+					content << "task_" << tle->id << "_op_list" <<endl;
+					for(k=0; k<mle->contents.size(); k++){
+						found = mle->contents[k].find(content.str());
+						if(found == std::string::npos){
+							continue;
+						}
+						mle->size = mle->size * tle->postactions[i];
+					}
+				}
+				//task_0_surf_list
+				for(j=0; j<mList.size(); j++){
+					mle = &mList[j];
+					content.str("");
+					content << "task_" << tle->id << "_surf_list" <<endl;
+					for(k=0; k<mle->contents.size(); k++){
+						found = mle->contents[k].find(content.str());
+						if(found == std::string::npos){
+							continue;
+						}
+						mle->size = mle->size * tle->postactions[i];
+					}
+				}
+				
+			}
+		}
 	}
 	return ;
 }
