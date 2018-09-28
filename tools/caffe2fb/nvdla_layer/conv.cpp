@@ -13,6 +13,7 @@ NvdlaConv::NvdlaConv()
     weight_mem_flag = -1;
     dst_mem_flag = -1;
     nvdla_type = NvConv;
+    conv_mode = CONV_MODE_DIRECT;
     set_bpe(2);
 }
 
@@ -93,6 +94,51 @@ union dla_layer_param_container NvdlaConv::get_params(void)
     params.nv_conv_params.weight_data = weight_data.data;
     return params;
 }
+
+union dla_surface_container NvdlaConv::fill_dla_surface_des(void)
+{
+    union dla_surface_container dla_surface_desc;
+    memset(&dla_surface_desc, 0, sizeof(union dla_surface_container));
+    dla_surface_desc.conv_surface.weight_data = surface_desc.weight_data;
+    dla_surface_desc.conv_surface.src_data = surface_desc.src_data;
+    dla_surface_desc.conv_surface.dst_data = surface_desc.dst_data;
+    return dla_surface_desc;
+}
+
+
+union dla_operation_container NvdlaConv::fill_dla_op_des(void)
+{
+    union dla_operation_container dla_op_desc;
+    memset(&dla_op_desc, 0, sizeof(union dla_operation_container));
+    dla_op_desc.conv_op.conv_mode = conv_mode;
+    dla_op_desc.conv_op.entry_per_slice = 7;
+    dla_op_desc.conv_op.data_format = FORMAT_FEATURE;
+    dla_op_desc.conv_op.fetch_grain = 1;
+    dla_op_desc.conv_op.batch = 1;
+    dla_op_desc.conv_op.weight_format = WEIGHT_FORMAT_UNCOMPRESSED;
+    dla_op_desc.conv_op.data_bank = 1;
+    dla_op_desc.conv_op.weight_bank = 1;
+    dla_op_desc.conv_op.release = surface_desc.src_data.width; // ??
+    dla_op_desc.conv_op.input_width_csc = surface_desc.src_data.width;
+    dla_op_desc.conv_op.input_height_csc = surface_desc.src_data.height;
+    dla_op_desc.conv_op.input_channel_csc = surface_desc.src_data.channel;
+    dla_op_desc.conv_op.input_width_cmac = surface_desc.dst_data.width;
+    dla_op_desc.conv_op.input_height_cmac = surface_desc.dst_data.height;
+    dla_op_desc.conv_op.bytes_per_kernel = surface_desc.weight_data.size / num_output;
+    dla_op_desc.conv_op.conv_stride_x = stride_w;
+    dla_op_desc.conv_op.conv_stride_y = stride_h;
+    dla_op_desc.conv_op.pad_x_left = pad_w;
+    dla_op_desc.conv_op.pad_x_right = pad_w;
+    dla_op_desc.conv_op.pad_y_bottom = pad_h;
+    dla_op_desc.conv_op.pad_y_top = pad_h;
+    dla_op_desc.conv_op.in_precision = PRECISION_FP16;//hafl_float
+    dla_op_desc.conv_op.out_precision = PRECISION_FP16;
+    dla_op_desc.conv_op.out_cvt.scale = 1;//??
+    dla_op_desc.conv_op.out_cvt.enable = 1;//??
+    return dla_op_desc;
+
+}
+
 
 
 }

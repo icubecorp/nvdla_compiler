@@ -66,6 +66,21 @@ void Layer::set_bpe(int bpe_p)
 }
 
 
+union dla_surface_container Layer::fill_dla_surface_des(void)
+{
+    union dla_surface_container dla_surface_des;
+    memset(&dla_surface_des, 0, sizeof(union dla_surface_container));
+    return dla_surface_des;
+}
+
+union dla_operation_container Layer::fill_dla_op_des(void)
+{
+    union dla_operation_container dla_op_desc;
+    memset(&dla_op_desc, 0, sizeof(union dla_operation_container));
+    return dla_op_desc;
+}
+
+
 #include "layer_declaration.h"
 
 static const layer_registry_entry layer_registry[] =

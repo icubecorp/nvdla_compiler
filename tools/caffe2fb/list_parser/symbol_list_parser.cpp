@@ -190,7 +190,6 @@ void *SymbolListParser::fill_conv_weight_data(Layer * layer){
 void SymbolListParser::fill_weight_blobs(std::vector<priv::Loadable::Symbol> *mlist,
         NetParser* net, MemoryListParser* memory_parser){
 
-    debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
     std::vector<Layer*> layers = mNetParserPtr->getLayers();
     const std::vector<ILoadable::MemoryListEntry> *mem_list =  \
             (const std::vector<ILoadable::MemoryListEntry> *)memory_parser->getList();
@@ -223,39 +222,77 @@ void SymbolListParser::fill_weight_blobs(std::vector<priv::Loadable::Symbol> *ml
             }
 
             mlist->push_back(blob);
+
         }
         
     }
 
 }
 
-void* SymbolListParser::fill_emu_taskinfo_blob(void){
-
-    return NULL;
-}
-
-
-void* SymbolListParser::fill_nvdla_taskinfo_blob(void){
-
-    return NULL;
+void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_entry){
 
 }
 
+void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_entry){
+
+    std::vector<Layer*> layers = mNetParserPtr->getLayers();
+    const std::vector<ILoadable::MemoryListEntry> *mem_list =  \
+            (const std::vector<ILoadable::MemoryListEntry> *)mMemoryListParserPtr->getList();
+    priv::Loadable::Symbol task_net_desc_blob;
+    priv::Loadable::Symbol task_dep_graph_blob;
+    priv::Loadable::Symbol task_op_list_blob;
+    priv::Loadable::Symbol task_surf_desc_blob;
+    Layer * layer;
+    NvU16 first_layer_index = task_entry.preactions[0];    
+    NvU16 last_layer_index = task_entry.postactions[0];   
+    NvU16 task_net_desc_address_index = 0;
+    NvU16 task_dep_graph_address_index = task_entry.address_list.size() - STRUCTS_PER_TASK + 1;
+    NvU16 task_op_list_address_index = task_entry.address_list.size() - STRUCTS_PER_TASK + 2;
+    NvU16 task_surf_desc_address_index = task_entry.address_list.size() - STRUCTS_PER_TASK + 3;
+    ILoadable::MemoryListEntry mem_entry;
+    
+    mem_entry = (*mem_list)[task_entry.address_list[task_op_list_address_index]];
+    task_op_list_blob.data = (NvU8 *)malloc(mem_entry.size);
+    task_op_list_blob.name = mem_entry.contents[0];
+    task_op_list_blob.size = mem_entry.size;
+    
+    mem_entry = (*mem_list)[task_entry.address_list[task_surf_desc_address_index]];
+    task_surf_desc_blob.data = (NvU8 *)malloc(mem_entry.size);
+    task_surf_desc_blob.name = mem_entry.contents[0];
+    task_surf_desc_blob.size = mem_entry.size;
+    
+    union dla_operation_container op_desc;
+    union dla_surface_container surface_desc;
+    NvU8 * op_data = task_op_list_blob.data;
+    NvU8 * surface_data = task_surf_desc_blob.data;
+    for(NvU16 i = first_layer_index; i <= last_layer_index; i++){
+        layer = layers[i];
+        op_desc = layer->fill_dla_op_des();
+        surface_desc = layer->fill_dla_surface_des();
+        memcpy(op_data, &op_desc, sizeof(union dla_operation_container));
+        op_data = op_data + sizeof(union dla_operation_container);
+        memcpy(surface_data, &surface_desc, sizeof(union dla_surface_container));
+        surface_data = surface_data + sizeof(union dla_surface_container);
+        
+    }
+    mList.push_back(task_op_list_blob);
+    mList.push_back(task_surf_desc_blob);
+
+}
 
 
-void SymbolListParser::fill_taskinfo_blobs(std::vector<priv::Loadable::Symbol> *mlist,
-    MemoryListParser* memory_parser, TaskListParser* task_parser){
-    std::vector<ILoadable::TaskListEntry> *task_list = (std::vector<ILoadable::TaskListEntry> *)task_parser->getList();
+
+void SymbolListParser::fill_taskinfo_blobs(void){
+    std::vector<ILoadable::TaskListEntry> *task_list = (std::vector<ILoadable::TaskListEntry> *)mTaskListParserPtr->getList();
     ILoadable::TaskListEntry task_entry;
-    priv::Loadable::Symbol blob;
     for(unsigned int i = 0; i < task_list->size(); i++){
         task_entry = (*task_list)[i];
         switch (task_entry.interface){
         case ILoadable::Interface_DLA1:
-            blob.data = (NvU8 *)fill_nvdla_taskinfo_blob();
+            fill_nvdla_taskinfo_blobs(task_entry);
             break;
         case ILoadable::Interface_EMU1:
-            blob.data = (NvU8 *)fill_emu_taskinfo_blob();
+            fill_emu_taskinfo_blobs(task_entry);
             break;
         default:
             printf("error not such task type=%d for blobs\n",task_entry.interface);
@@ -271,8 +308,8 @@ void SymbolListParser::buildList() {
         printf("Warning: list only build for once\n");
         return;
     }
-    
-    fill_weight_blobs(&mList, mNetParserPtr, mMemoryListParserPtr);
+    fill_weight_blobs(&mList, mNetParserPtr, mMemoryListParserPtr); 
+    fill_taskinfo_blobs();
 }
 
 void SymbolListParser::dump_blobs_info(void){

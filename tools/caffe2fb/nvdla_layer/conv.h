@@ -16,6 +16,8 @@ public:
     virtual void set_weight_data(Mat weight_data);
     virtual void print_layer_info(void);
     virtual union dla_layer_param_container get_params(void);
+    virtual union dla_surface_container fill_dla_surface_des(void);
+    virtual union dla_operation_container fill_dla_op_des(void);
 public:
     // param
     int num_output;
@@ -33,7 +35,11 @@ public:
 
     // model
     Mat weight_data;
+
+    
 //    Mat bias_data;
+private:
+    int conv_mode;
 
 };
 

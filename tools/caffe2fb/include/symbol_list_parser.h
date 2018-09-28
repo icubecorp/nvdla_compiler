@@ -37,10 +37,10 @@ static int roundUp(int numToRound, int multiple)
 	const void* getList() const;
     void fill_weight_blobs(std::vector<priv::Loadable::Symbol> *mlist, NetParser* net,\
             MemoryListParser* memory_parser);
-    void fill_taskinfo_blobs(std::vector<priv::Loadable::Symbol> *mlist,\
-            MemoryListParser* memory_parser, TaskListParser* task_parser);
-    void* fill_nvdla_taskinfo_blob(void);
-    void* fill_emu_taskinfo_blob(void);
+    void fill_taskinfo_blobs(void);
+    void fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_entry);
+    void fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_entry);
+    void  fill_emu_taskinfo_blob(void);
     void* fill_conv_weight_data(Layer * layer);
     void* fill_bias_weight_data(Layer * layer);
     void dump_blobs_info(void);

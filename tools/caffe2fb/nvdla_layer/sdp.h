@@ -17,6 +17,8 @@ public:
     virtual union dla_layer_param_container get_params(void);
     virtual void set_action(dla_action action_p);
     virtual dla_action get_action(void);
+    virtual union dla_surface_container fill_dla_surface_des(void);
+    virtual union dla_operation_container fill_dla_op_des(void);
 
 public:
     Mat weight_data;

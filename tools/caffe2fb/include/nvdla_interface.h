@@ -9,7 +9,11 @@
 
 
 
+
+
+#define STRUCTS_PER_TASK 6
 enum dla_action{ ACTION_NONE = 0, SDP_ACTION_ADD_BIAS = 1, SDP_ACTION_RELU = 2,};    
+
 struct dla_nv_conv_params
 {
     // param
@@ -73,6 +77,7 @@ typedef unsigned short uint16_t;
 typedef signed short int16_t;
 typedef unsigned int uint32_t;
 typedef signed int int32_t;
+typedef unsigned char uint8_t;
 
 struct dla_data_cube {
 	uint16_t type; /* dla_mem_type */
