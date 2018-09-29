@@ -472,7 +472,7 @@ void MemoryListParser::layerSoftmaxParse(Layer* layer, Layer* pre_layer){
 	layer->surface_desc.weight_data.type = DLA_MEM_MC;
 	//dst
 	layer->dst_mem_flag = 1;
-	layer->surface_desc.dst_data.address = layer->surface_desc.src_data.address;
+	layer->surface_desc.dst_data.address = mem_id;
 	layer->surface_desc.dst_data.channel = layer->surface_desc.src_data.channel;
 	layer->surface_desc.dst_data.height = layer->surface_desc.src_data.height;
 	layer->surface_desc.dst_data.width = layer->surface_desc.src_data.width;
@@ -487,7 +487,7 @@ void MemoryListParser::layerSoftmaxParse(Layer* layer, Layer* pre_layer){
 	mle.alignment = MEM_ALIGNMENT_PAGE;
 	mle.bind_id = 0;
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
-	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
+	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_OUTPUT;
 	mle.offsets.push_back(0);
 	mle.size = layer->surface_desc.dst_data.size; 
 	mle.tensor_desc_id = 0;

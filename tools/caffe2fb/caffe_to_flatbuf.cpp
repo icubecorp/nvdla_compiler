@@ -60,8 +60,8 @@ CaffeToFlatbuf::CaffeToFlatbuf(const char * protopath, const char * modelpath) :
 	parser = new EventListParser(mNetParserPtr);
 	mListParsers.push_back(parser);
 
-	parser = new TensorDescListParser(mNetParserPtr);
-	mListParsers.push_back(parser);
+//	parser = new TensorDescListParser(mNetParserPtr,);
+//	mListParsers.push_back(parser);
 
 	parser = new SymbolListParser(mNetParserPtr, (MemoryListParser*)mListParsers[MEMORY_LIST_PARSER], (TaskListParser*)mListParsers[TASK_LIST_PARSER]);
 	mListParsers.push_back(parser);

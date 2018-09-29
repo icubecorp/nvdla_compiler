@@ -2,6 +2,8 @@
 #include "net_parser.h"
 #include "memory_list_parser.h"
 #include "symbol_list_parser.h"
+#include "tensor_desc_list_parser.h"
+
 using namespace nvdla;
 int main()
 {
@@ -16,6 +18,9 @@ int main()
     memlist->fillTaskAddrList();
     tlp->debugTaskList();    
     memlist->debugMemList();
+    TensorDescListParser *tensorlist = new TensorDescListParser(&lenet, memlist);
+    tensorlist->buildList();
+    tensorlist->dump_tensor_info();
     SymbolListParser* symbollist = new SymbolListParser(&lenet,memlist,tlp);
     symbollist->buildList();
     symbollist->dump_blobs_info();

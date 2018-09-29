@@ -5,7 +5,8 @@
 #include "net.h"
 #include <stdio.h>
 #include <vector>
-
+#include <memory.h>
+#include <string.h>
 
 namespace nvdla{
 

@@ -10,7 +10,7 @@
 
 #include "nvdla/ILoadable.h"
 #include "net_parser.h"
-
+#include "priv/loadable_generated.h"
 namespace nvdla {
 
 enum LIST_PARSER_TYPE {
