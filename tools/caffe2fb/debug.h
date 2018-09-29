@@ -18,6 +18,7 @@ namespace nvdla {
     void debug_info_sdp_surface_desc(struct dla_sdp_surface_desc *desc, int32_t roi);
     void debug_info_sdp_op_desc(struct dla_sdp_op_desc *desc, int32_t roi);
     void debug_info_op_desc(struct dla_common_op_desc *desc, int32_t roi);
+    void debug_info_network_desc(struct dla_network_desc *nd);
 }
 
 

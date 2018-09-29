@@ -366,6 +366,19 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
    mList.push_back(task_op_buf_blob);
    return ;
 }
+int32_t SymbolListParser::find_first_layer_index(int32_t first_layer, uint8_t type, int32_t last_layer){
+
+    std::vector<Layer*> layers = mNetParserPtr->getLayers();
+    Layer* layer;
+    for(int i = first_layer; i <= last_layer; i++){
+        layer = layers[i];
+        if(layer->nvdla_type == type)
+            return i;
+    }
+
+    return -1;
+
+}
 
 int32_t SymbolListParser::find_next_layer_index(int32_t cur_layer, layer_type type, int32_t last_layer){
     std::vector<Layer*> layers = mNetParserPtr->getLayers();
@@ -494,7 +507,7 @@ void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_e
     NvU16 task_op_list_address_index = task_entry.address_list.size() - STRUCTS_PER_TASK + 2;
     NvU16 task_surf_desc_address_index = task_entry.address_list.size() - STRUCTS_PER_TASK + 3;
     ILoadable::MemoryListEntry mem_entry;
-    
+    int32_t index = 0;
     mem_entry = (*mem_list)[task_entry.address_list[task_net_desc_address_index]];
     task_net_desc_blob.data = (NvU8 *)malloc(mem_entry.size);
     task_net_desc_blob.name = mem_entry.contents[0];
@@ -512,9 +525,14 @@ void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_e
     net_desc.num_rois = 0;
     net_desc.num_operations = task_entry.postactions[0] - task_entry.preactions[0] + 1;
     net_desc.num_luts = 0;
-    net_desc.num_addresses = task_entry.address_list.size() - 1;
+    net_desc.num_addresses = task_entry.address_list.size();
+    for(int i = 0; i < DLA_OP_NUM; i++){
+        index = find_first_layer_index(first_layer_index, i, last_layer_index);
+        debug_info("index =%d\n",index);
+        index = index - (int32_t)first_layer_index;
+        net_desc.op_head[i] = (index < 0 ? -1 : index);
+    }
     memcpy(net_desc_data, &net_desc, sizeof(struct dla_network_desc));
-    
 
     mem_entry = (*mem_list)[task_entry.address_list[task_dep_graph_address_index]];
     task_dep_graph_blob.data = (NvU8 *)malloc(mem_entry.size);
@@ -649,6 +667,9 @@ void SymbolListParser::dump_blobs_info(void){
                 debug_info_op_desc((struct dla_common_op_desc*)data,0);
                 data = data + sizeof(struct dla_common_op_desc);
              }
+        }
+        else if(symbol.name.find("task_0_network_desc") != string::npos){
+                debug_info_network_desc((struct dla_network_desc *)data);
         }
         else{
             for(unsigned int j = 0; j < symbol.size; j = j+16){

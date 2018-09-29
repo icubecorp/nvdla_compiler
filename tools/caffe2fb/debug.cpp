@@ -286,4 +286,29 @@ debug_info_op_desc(struct dla_common_op_desc *desc, int32_t roi)
 }
 
 
+void
+debug_info_network_desc(struct dla_network_desc *nd)
+{
+	debug_info("*********************************************************\n");
+	debug_info("NVDLA FW dla_network_desc\n");
+	debug_info("---------------------------------------------------------\n");
+	debug_info("op desc index      = %d\n", nd->operation_desc_index);
+	debug_info("surface desc index = %d\n", nd->surface_desc_index);
+	debug_info("dep graph index    = %d\n", nd->dependency_graph_index);
+	debug_info("lut data index     = %d\n", nd->lut_data_index);
+	debug_info("stat_list_index    = %d\n", nd->stat_list_index);
+	debug_info("roi array index    = %d\n", nd->roi_array_index);
+	debug_info("surface index      = %d\n", nd->surface_index);
+	debug_info("num rois           = %u\n", nd->num_rois);
+	debug_info("num ops            = %u\n", nd->num_operations);
+	debug_info("num luts           = %u\n", nd->num_luts);
+	debug_info("num addr           = %u\n", nd->num_addresses);
+	debug_info("input layer        = %u\n", nd->input_layer);
+	debug_info("dynamic roi        = %u\n", nd->dynamic_roi);
+    for(int i = 0; i < DLA_OP_NUM; i++ ){
+        debug_info("nd->op_head[%d]=%d\n",i,nd->op_head[i]);
+    }
+}
+
+
 }
