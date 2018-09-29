@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include "nvdla/ILoadable.h"
 #include <string.h>
+#include "priv/emu/emu1/A/emu_interface.h"
 using namespace std;
 
 namespace nvdla {
@@ -232,7 +233,138 @@ void SymbolListParser::fill_weight_blobs(std::vector<priv::Loadable::Symbol> *ml
 }
 
 void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_entry){
+	
+   if(task_entry.interface != ILoadable::Interface_EMU1){
+	   printf("%s, %d, this is emu task, error!\n",__FUNCTION__, __LINE__);
+	   return ;
+   }
+   
+   std::vector<Layer*> layers = mNetParserPtr->getLayers();
+   Layer* layer = NULL;
+   NvU16 task_layer_start_idx = 0;
+   NvU16 task_layer_end_idx = 0;
+   NvU16 i;
 
+   const std::vector<ILoadable::MemoryListEntry> *mem_list =  \
+			   (const std::vector<ILoadable::MemoryListEntry> *)mMemoryListParserPtr->getList();
+   ILoadable::MemoryListEntry mem_entry;
+   NvU16 start_mem_id = 0;
+
+   union dla_layer_param_container layer_par;
+   priv::Loadable::Symbol task_network_desc_blob;
+   priv::Loadable::Symbol task_op_container_blob;
+   priv::Loadable::Symbol task_op_buf_blob;
+   NvU8* pdata = NULL;
+   struct emu_network_desc network_desc;
+   union emu_operation_container operation_container;
+   union emu_operation_buffer_container operation_buf_container;
+   
+   if(task_entry.postactions.size() != task_entry.preactions.size()){
+       printf("%s, %d, error!\n", __FUNCTION__, __LINE__);
+	   return ;
+   }
+   
+   for(i=0; i<task_entry.postactions.size(); i++){
+       task_layer_end_idx = task_entry.postactions[i];
+   }
+   
+   for(i=0; i<task_entry.preactions.size(); i++){
+   	   task_layer_start_idx = task_entry.preactions[i];
+   }
+
+   for(i=task_layer_start_idx; i<task_layer_end_idx + 1; i++){
+   	    layer = layers[i];
+   }
+
+   layer_par = layer->get_params();
+   
+   //get task network description mem id and mementry 
+   start_mem_id = task_entry.address_list[0];
+   mem_entry = (*mem_list)[start_mem_id];
+   //fill task network description
+   task_network_desc_blob.data = (NvU8 *)malloc(mem_entry.size);
+   if(task_network_desc_blob.data == NULL){
+   	  printf("%s, %d, malloc buffer failed!\n", __FUNCTION__, __LINE__);
+	  return ;
+   }
+   pdata = task_network_desc_blob.data;
+   memset(pdata, 0, mem_entry.size);
+   //layer numbers
+   network_desc.num_operations = task_layer_end_idx - task_layer_start_idx + 1;
+   //operation list mem id
+   network_desc.operation_desc_index = start_mem_id + 1;
+   //operation buffer description mem id
+   network_desc.operation_buffer_desc_index = start_mem_id = start_mem_id + 2;
+   memcpy(pdata, &network_desc, sizeof(struct emu_network_desc));
+   
+   task_network_desc_blob.interface = ILoadable::Interface_EMU1;
+   task_network_desc_blob.name = mem_entry.contents[0];
+   task_network_desc_blob.size = mem_entry.size;
+   task_network_desc_blob.subInterface = 0;
+   task_network_desc_blob.version.major = 0;
+   task_network_desc_blob.version.minor = 0;
+   task_network_desc_blob.version.sub_minor = 0;
+   //push into vector
+   mList.push_back(task_network_desc_blob);
+   
+
+   //fill task power op list
+   mem_entry = (*mem_list)[start_mem_id + 1];
+   task_op_container_blob.data = (NvU8 *)malloc(mem_entry.size);
+   if(task_op_container_blob.data == NULL){
+   	  printf("%s, %d, malloc buffer failed!\n", __FUNCTION__, __LINE__);
+	  return ;
+   }
+   pdata = task_op_container_blob.data;
+   memset(pdata, 0, mem_entry.size);
+   operation_container.softmax_op.common.op_type = 0;
+   operation_container.softmax_op.axis = layer_par.nv_softmax_params.axis;
+   memcpy(pdata, &operation_container, sizeof(union emu_operation_container));
+   
+   task_op_container_blob.interface = ILoadable::Interface_EMU1;
+   task_op_container_blob.name = mem_entry.contents[0];
+   task_op_container_blob.size = mem_entry.size;
+   task_op_container_blob.subInterface = 0;
+   task_op_container_blob.version.major = 0;
+   task_op_container_blob.version.minor = 0;
+   task_op_container_blob.version.sub_minor = 0;
+   mList.push_back(task_op_container_blob);
+
+   //fill task op buf list
+   mem_entry = (*mem_list)[start_mem_id + 2];
+   task_op_buf_blob.data = (NvU8 *)malloc(mem_entry.size);
+   if(task_op_container_blob.data == NULL){
+   	  printf("%s, %d, malloc buffer failed!\n", __FUNCTION__, __LINE__);
+	  return ;
+   }
+   pdata = task_op_container_blob.data;
+   memset(pdata, 0, mem_entry.size);
+   operation_buf_container.softmax_buffers.src_data.addressIndex = layer->surface_desc.src_data.address;
+   operation_buf_container.softmax_buffers.src_data.channel = layer->surface_desc.src_data.channel;
+   operation_buf_container.softmax_buffers.src_data.format = layer->get_bpe();
+   operation_buf_container.softmax_buffers.src_data.height = layer->surface_desc.src_data.height;
+   operation_buf_container.softmax_buffers.src_data.size = layer->surface_desc.src_data.size;
+   operation_buf_container.softmax_buffers.src_data.surf_stride = layer->surface_desc.src_data.surf_stride;
+   operation_buf_container.softmax_buffers.src_data.width = layer->surface_desc.src_data.width;
+
+   operation_buf_container.softmax_buffers.dst_data.addressIndex = layer->surface_desc.dst_data.address;
+   operation_buf_container.softmax_buffers.dst_data.channel = layer->surface_desc.dst_data.channel;
+   operation_buf_container.softmax_buffers.dst_data.format = operation_buf_container.softmax_buffers.src_data.format;
+   operation_buf_container.softmax_buffers.dst_data.height = layer->surface_desc.dst_data.height;
+   operation_buf_container.softmax_buffers.dst_data.line_stride = layer->surface_desc.dst_data.line_stride;
+   operation_buf_container.softmax_buffers.dst_data.size = layer->surface_desc.dst_data.size;
+   operation_buf_container.softmax_buffers.dst_data.surf_stride = layer->surface_desc.dst_data.surf_stride;
+   operation_buf_container.softmax_buffers.dst_data.width = layer->surface_desc.dst_data.width;
+   memcpy(pdata, &operation_buf_container, sizeof(union emu_operation_buffer_container));
+   task_op_buf_blob.interface = ILoadable::Interface_EMU1;
+   task_op_buf_blob.name = mem_entry.contents[0];
+   task_op_buf_blob.size = mem_entry.size;
+   task_op_buf_blob.subInterface = 0;
+   task_op_buf_blob.version.major = 0;
+   task_op_buf_blob.version.minor = 0;
+   task_op_buf_blob.version.sub_minor = 0;
+   mList.push_back(task_op_buf_blob);
+   return ;
 }
 
 int32_t SymbolListParser::find_next_layer_index(int32_t cur_layer, layer_type type, int32_t last_layer){
