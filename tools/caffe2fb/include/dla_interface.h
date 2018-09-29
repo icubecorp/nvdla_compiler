@@ -42,7 +42,7 @@
 #define DLA_OP_SDP		2
 #define DLA_OP_PDP		3
 #define DLA_OP_CDP		4
-#define DLA_OP_RUBIK		5
+#define DLA_OP_RUBIK    5
 /** @} */
 
 /**

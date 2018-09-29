@@ -235,6 +235,116 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
 
 }
 
+int32_t SymbolListParser::find_next_layer_index(int32_t cur_layer, layer_type type, int32_t last_layer){
+    std::vector<Layer*> layers = mNetParserPtr->getLayers();
+    Layer* layer;
+    int32_t next_layer_index = -1;
+    if((cur_layer + 1) > last_layer)
+        return next_layer_index;
+    if(type == NvAnyone){
+        next_layer_index = cur_layer + 1;
+        return next_layer_index;//found
+    }
+    else{
+        next_layer_index = cur_layer + 1;
+        layer = layers[next_layer_index];
+        if(layer->nvdla_type == type){
+            next_layer_index = -1;
+            return next_layer_index;
+        }
+        for(next_layer_index = cur_layer + 2; next_layer_index <= last_layer; next_layer_index++){
+            layer = layers[next_layer_index];
+            if(layer->nvdla_type == type)
+                return next_layer_index; //found
+        }
+        next_layer_index = -1; // not found
+    }
+    
+    return next_layer_index;
+
+}
+
+void SymbolListParser::set_default_dep_graph(struct dla_common_op_desc *dep_graph){
+
+    for(uint16_t i =0; i < DLA_OP_NUM; i++){
+        dep_graph->consumers[i].index = -1;
+        dep_graph->consumers[i].event = 1;
+    }
+    dep_graph->fused_parent.index = -1;
+    dep_graph->fused_parent.event = 1;
+}
+
+void SymbolListParser::fill_dla_dep_graph_blob(ILoadable::TaskListEntry task_entry,
+    priv::Loadable::Symbol *dep_graph_blob){
+
+    NvU8 * dep_graph_data = dep_graph_blob->data;
+    struct dla_common_op_desc *dep_graph_cur;
+    struct dla_common_op_desc *dep_graph_pre_fetch;
+    struct dla_common_op_desc *dep_graph_parent;
+    std::vector<Layer*> layers = mNetParserPtr->getLayers();
+    int32_t first_layer = task_entry.preactions[0];
+    int32_t last_layer = task_entry.postactions[0];
+    int32_t dep_graph_index = 0;
+    Layer * layer_cur;
+    Layer * layer_prefetch;
+    Layer * layer_parent;
+    int32_t prefetch_id = 0;
+    int32_t parent_id = 0;
+    memset(dep_graph_data, 0, dep_graph_blob->size);
+
+    for(int32_t i = first_layer; i <= last_layer; i++){
+        dep_graph_index = i - first_layer;
+        dep_graph_cur = (struct dla_common_op_desc *)(dep_graph_data + dep_graph_index * sizeof(dla_common_op_desc));
+        set_default_dep_graph(dep_graph_cur);
+    }
+    for(int32_t cur_id = first_layer; cur_id <= last_layer; cur_id++){
+        dep_graph_index = cur_id - first_layer;
+        layer_cur = layers[cur_id];
+        dep_graph_cur = (struct dla_common_op_desc *)(dep_graph_data + dep_graph_index * sizeof(dla_common_op_desc));
+        debug_info("cur_id=%d,layer_cur->nvdla_type=%d,\n",cur_id - first_layer,layer_cur->nvdla_type);
+        dep_graph_cur->op_type = layer_cur->nvdla_type;
+        //prefetch next layer which type is the same as the current layer
+        prefetch_id = find_next_layer_index(cur_id, layer_cur->nvdla_type, last_layer);
+        if(prefetch_id != -1){
+            layer_prefetch = layers[prefetch_id];
+            debug_info("prefetch_id=%d for same\n",prefetch_id - first_layer);
+            dep_graph_cur->consumers[layer_prefetch->nvdla_type].index = prefetch_id - first_layer;
+            dep_graph_cur->consumers[layer_prefetch->nvdla_type].event = DLA_EVENT_OP_PROGRAMMED;
+            dep_graph_pre_fetch =(struct dla_common_op_desc *)(dep_graph_data + (prefetch_id - first_layer) * sizeof(dla_common_op_desc));
+            dep_graph_pre_fetch->dependency_count ++;
+        }
+        //prefetch next layer which will process after current layer process done
+        prefetch_id = find_next_layer_index(cur_id, NvAnyone, last_layer);
+        if(prefetch_id != -1){
+            layer_prefetch = layers[prefetch_id];
+            debug_info("prefetch_id=%d for anyone\n",prefetch_id - first_layer);
+            dep_graph_cur->consumers[layer_prefetch->nvdla_type].index = prefetch_id - first_layer;
+            if(dep_graph_cur->op_type == DLA_OP_CONV)
+                dep_graph_cur->consumers[layer_prefetch->nvdla_type].event = DLA_EVENT_OP_PROGRAMMED;
+            else
+                dep_graph_cur->consumers[layer_prefetch->nvdla_type].event = DLA_EVENT_OP_COMPLETED;
+            dep_graph_pre_fetch =(struct dla_common_op_desc *)(dep_graph_data + (prefetch_id - first_layer) * sizeof(dla_common_op_desc));
+            dep_graph_pre_fetch->dependency_count ++;
+        }
+
+        //prefecth parent layer
+        // now only sdp layer has parent layer which type must be NvConv
+        if(layer_cur->nvdla_type == NvSDP){
+            parent_id = cur_id -1;
+            if(parent_id >= first_layer){
+                layer_parent = layers[parent_id];
+                if(layer_parent->nvdla_type == NvConv){//found
+                    debug_info("parent=%d \n",parent_id - first_layer);
+                    dep_graph_cur->fused_parent.index = parent_id - first_layer;
+                    dep_graph_cur->fused_parent.event = DLA_EVENT_OP_ENABLED;
+                    dep_graph_parent =(struct dla_common_op_desc *)(dep_graph_data + (parent_id - first_layer) * sizeof(dla_common_op_desc));
+                    dep_graph_parent->dependency_count ++;
+                }
+            }
+        }
+   }
+}
+
 void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_entry){
 
     std::vector<Layer*> layers = mNetParserPtr->getLayers();
@@ -253,16 +363,43 @@ void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_e
     NvU16 task_surf_desc_address_index = task_entry.address_list.size() - STRUCTS_PER_TASK + 3;
     ILoadable::MemoryListEntry mem_entry;
     
+    mem_entry = (*mem_list)[task_entry.address_list[task_net_desc_address_index]];
+    task_net_desc_blob.data = (NvU8 *)malloc(mem_entry.size);
+    task_net_desc_blob.name = mem_entry.contents[0];
+    task_net_desc_blob.size = mem_entry.size;
+    struct dla_network_desc net_desc;
+    memset(&net_desc, 0, sizeof(struct dla_network_desc));
+    NvU8 * net_desc_data = task_net_desc_blob.data;
+    net_desc.operation_desc_index = task_op_list_address_index;
+    net_desc.surface_desc_index = task_surf_desc_address_index;
+    net_desc.dependency_graph_index = task_dep_graph_address_index;
+    net_desc.lut_data_index = -1;
+    net_desc.roi_array_index = -1;
+    net_desc.surface_index = -1;
+    net_desc.stat_list_index = -1;
+    net_desc.num_rois = 0;
+    net_desc.num_operations = task_entry.postactions[0] - task_entry.preactions[0] + 1;
+    net_desc.num_luts = 0;
+    net_desc.num_addresses = task_entry.address_list.size() - 1;
+    memcpy(net_desc_data, &net_desc, sizeof(struct dla_network_desc));
+    
+
+    mem_entry = (*mem_list)[task_entry.address_list[task_dep_graph_address_index]];
+    task_dep_graph_blob.data = (NvU8 *)malloc(mem_entry.size);
+    task_dep_graph_blob.name = mem_entry.contents[0];
+    task_dep_graph_blob.size = mem_entry.size;
+    fill_dla_dep_graph_blob(task_entry, &task_dep_graph_blob);
+    
     mem_entry = (*mem_list)[task_entry.address_list[task_op_list_address_index]];
     task_op_list_blob.data = (NvU8 *)malloc(mem_entry.size);
     task_op_list_blob.name = mem_entry.contents[0];
     task_op_list_blob.size = mem_entry.size;
-    
+
     mem_entry = (*mem_list)[task_entry.address_list[task_surf_desc_address_index]];
     task_surf_desc_blob.data = (NvU8 *)malloc(mem_entry.size);
     task_surf_desc_blob.name = mem_entry.contents[0];
     task_surf_desc_blob.size = mem_entry.size;
-    
+
     union dla_operation_container op_desc;
     union dla_surface_container surface_desc;
     NvU8 * op_data = task_op_list_blob.data;
@@ -276,6 +413,8 @@ void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_e
         memcpy(surface_data, &surface_desc, sizeof(union dla_surface_container));
         surface_data = surface_data + sizeof(union dla_surface_container);
     }
+    mList.push_back(task_net_desc_blob);
+    mList.push_back(task_dep_graph_blob);
     mList.push_back(task_op_list_blob);
     mList.push_back(task_surf_desc_blob);
 
@@ -372,6 +511,12 @@ void SymbolListParser::dump_blobs_info(void){
                 }
                 data = data + sizeof(union dla_operation_container);
             }            
+        }
+        else if(symbol.name.find("task_0_dep_graph") != string::npos){
+             for(int j = first_layer; j <= last_layer; j++){
+                debug_info_op_desc((struct dla_common_op_desc*)data,0);
+                data = data + sizeof(struct dla_common_op_desc);
+             }
         }
         else{
             for(unsigned int j = 0; j < symbol.size; j = j+16){

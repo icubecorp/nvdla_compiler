@@ -39,6 +39,9 @@ static int roundUp(int numToRound, int multiple)
             MemoryListParser* memory_parser);
     void fill_taskinfo_blobs(void);
     void fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_entry);
+    void fill_dla_dep_graph_blob(ILoadable::TaskListEntry task_entry, priv::Loadable::Symbol *dep_graph_blob);
+    void set_default_dep_graph(struct dla_common_op_desc *dep_graph);
+    int32_t find_next_layer_index(int32_t cur_layer, layer_type type, int32_t last_layer);
     void fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_entry);
     void  fill_emu_taskinfo_blob(void);
     void* fill_conv_weight_data(Layer * layer);

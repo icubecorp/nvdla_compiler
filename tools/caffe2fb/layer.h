@@ -25,13 +25,16 @@ namespace nvdla {
 class Allocator;
 enum layer_type
 {   
-    NvInput = 0,
-    NvConv = 1,
-    NvSDP = 2,
-    NvPDP = 3,
-    NvSoftmax = 4,
+    NvBDMA = DLA_OP_BDMA,
+    NvConv = DLA_OP_CONV,
+    NvSDP = DLA_OP_SDP,
+    NvPDP = DLA_OP_PDP,
+    NvCDP = DLA_OP_CDP,
+    NvRUBIK = DLA_OP_RUBIK,
+    NvSoftmax = NvRUBIK + 1,
+    NvInput = NvSoftmax + 1,
+    NvAnyone = NvInput + 1,
 };
-
 class Option
 {
 public:

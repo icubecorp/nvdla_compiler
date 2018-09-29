@@ -263,23 +263,27 @@ debug_info_sdp_op_desc(struct dla_sdp_op_desc *desc, int32_t roi)
 }
 
 
+void
+debug_info_op_desc(struct dla_common_op_desc *desc, int32_t roi)
+{
+	int32_t i;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	debug_info("*********************************************************\n");
+	debug_info("NVDLA FW ROI[%d]: dla_common_op_desc\n", roi);
+	debug_info("---------------------------------------------------------\n");
+	debug_info("[%p] Operation index %d ROI %d dep_count %d type %d\n",
+			(unsigned int *)desc, desc->index, desc->roi_index,
+			desc->dependency_count, desc->op_type);
+	debug_info("consumers = [ dla_consumer =>\n");
+	for (i = 0; i < DLA_OP_NUM; i++)
+		debug_info(" [ %d %d ]", desc->consumers[i].index,
+					desc->consumers[i].event);
+	debug_info("]");
+	debug_info("fused_parent = [ dla_consumer =>\n");
+	debug_info(" [ %d %d ]", desc->fused_parent.index,
+					desc->fused_parent.event);
+	debug_info("]");
+}
 
 
 }
