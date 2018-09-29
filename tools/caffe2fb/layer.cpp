@@ -8,7 +8,6 @@ namespace nvdla {
 Layer::Layer()
 {
 }
-
 Layer::~Layer()
 {
 }

@@ -605,7 +605,7 @@ void SymbolListParser::dump_blobs_info(void){
         debug_info("start to dump size=%d\n", symbol.size);
         
         if(symbol.name.find("task_0_surf_list") != string::npos){
-            for(int j = first_layer; j < last_layer; j++){
+            for(int j = first_layer; j <= last_layer; j++){
                 layer = layers[j];
                 switch(layer->nvdla_type){
                     case NvConv:

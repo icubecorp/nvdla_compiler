@@ -4,7 +4,7 @@
 #include "debug.h"
 
 namespace nvdla {
-
+static int hard_patch_index = 0;
 DEFINE_LAYER_CREATOR(NvdlaConv)
 
 NvdlaConv::NvdlaConv()
@@ -23,6 +23,23 @@ NvdlaConv::NvdlaConv()
     stride_h = 1;
     pad_w = 0;
     pad_h = 0;
+    if(hard_patchs[0].entry_per_slice = 7){
+        hard_patchs[0].entry_per_slice = 7;
+        hard_patchs[0].skip_weight_rls = 0;
+        hard_patchs[0].weight_bank = 1;
+
+        hard_patchs[1].entry_per_slice = 6;
+        hard_patchs[1].skip_weight_rls = 0;
+        hard_patchs[1].weight_bank = 2;
+
+        hard_patchs[2].entry_per_slice = 4;
+        hard_patchs[2].skip_weight_rls = 0;
+        hard_patchs[2].weight_bank = 2;
+
+        hard_patchs[3].entry_per_slice = 8;
+        hard_patchs[3].skip_weight_rls = 1;
+        hard_patchs[3].weight_bank = 1;
+    }
 }
 
 NvdlaConv::~NvdlaConv()
@@ -116,15 +133,17 @@ union dla_surface_container NvdlaConv::fill_dla_surface_des(void)
 union dla_operation_container NvdlaConv::fill_dla_op_des(void)
 {
     union dla_operation_container dla_op_desc;
+    hard_patch_index++;
     memset(&dla_op_desc, 0, sizeof(union dla_operation_container));
     dla_op_desc.conv_op.conv_mode = conv_mode;
-    dla_op_desc.conv_op.entry_per_slice = 7;
+    dla_op_desc.conv_op.skip_weight_rls = hard_patchs[hard_patch_index - 1].skip_weight_rls;
+    dla_op_desc.conv_op.entry_per_slice = hard_patchs[hard_patch_index - 1].entry_per_slice;
     dla_op_desc.conv_op.data_format = FORMAT_FEATURE;
     dla_op_desc.conv_op.fetch_grain = 1;
     dla_op_desc.conv_op.batch = 1;
     dla_op_desc.conv_op.weight_format = WEIGHT_FORMAT_UNCOMPRESSED;
     dla_op_desc.conv_op.data_bank = 1;
-    dla_op_desc.conv_op.weight_bank = 1;
+    dla_op_desc.conv_op.weight_bank = hard_patchs[hard_patch_index - 1].weight_bank;
     dla_op_desc.conv_op.release = surface_desc.src_data.width; // ??
     dla_op_desc.conv_op.input_width_csc = surface_desc.src_data.width;
     dla_op_desc.conv_op.input_height_csc = surface_desc.src_data.height;
