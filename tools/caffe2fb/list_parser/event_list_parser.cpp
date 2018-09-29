@@ -27,7 +27,8 @@ const void* EventListParser::getList() const
 
 void  EventListParser::buildList()
 {
-	//TODO
+    //TODO
+    log_info("Dummy EventListParser::buildList\n");
 }
 
 

@@ -26,7 +26,8 @@ const void* RelocListParser::getList() const
 
 void  RelocListParser::buildList()
 {
-
+    //TODO
+    log_info("Dummy RelocListParser::buildList\n");
 }
 
 
