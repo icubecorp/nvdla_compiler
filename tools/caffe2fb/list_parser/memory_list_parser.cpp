@@ -912,7 +912,7 @@ void MemoryListParser::fillTaskAddrList(void){
 						if(found == std::string::npos){
 							continue;
 						}
-						mle->size = mle->size * (tle->postactions[i] - tle->preactions[i]);
+						mle->size = mle->size * (tle->postactions[i] - tle->preactions[i] + 1);
 					}
 				}
 				//task_0_op_list
@@ -925,7 +925,7 @@ void MemoryListParser::fillTaskAddrList(void){
 						if(found == std::string::npos){
 							continue;
 						}
-						mle->size = mle->size * (tle->postactions[i] - tle->preactions[i]);
+						mle->size = mle->size * (tle->postactions[i] - tle->preactions[i] + 1);
 					}
 				}
 				//task_0_surf_list
@@ -938,7 +938,7 @@ void MemoryListParser::fillTaskAddrList(void){
 						if(found == std::string::npos){
 							continue;
 						}
-						mle->size = mle->size * (tle->postactions[i] - tle->preactions[i]);
+						mle->size = mle->size * (tle->postactions[i] - tle->preactions[i] + 1);
 					}
 				}
 				
