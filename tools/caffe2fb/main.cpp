@@ -5,6 +5,7 @@
 #include "tensor_desc_list_parser.h"
 #include "event_list_parser.h"
 #include "reloc_list_parser.h"
+#include "submit_list_parser.h"
 using namespace nvdla;
 int main()
 {
@@ -26,6 +27,8 @@ int main()
     memlist->fillTaskAddrList();
     tlp->debugTaskList();    
     memlist->debugMemList();
+    SubmitListParser *submitlist = new SubmitListParser(&lenet, tlp);
+    submitlist->buildList();
     TensorDescListParser *tensorlist = new TensorDescListParser(&lenet, memlist);
     tensorlist->buildList();
     tensorlist->dump_tensor_info();

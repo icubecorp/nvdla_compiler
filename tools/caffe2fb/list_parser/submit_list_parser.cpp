@@ -26,14 +26,19 @@ const void* SubmitListParser::getList() const {
 
 void SubmitListParser::buildList() {
 
-	//TODO always only one submit for all tasks
+    std::vector<NvU16> task_ids = mTaskListPtr->get_task_id();
+    for(unsigned int i = 0; i < task_ids.size(); i++ ){
+	    ILoadable::SubmitListEntry submit;
+    	submit.id = i;
+    	submit.tasks.push_back(task_ids[i]);
+    	mList.push_back(submit);
+    }
 
-	ILoadable::SubmitListEntry submit;
-
-	submit.id = 0;
-	submit.tasks = mTaskListPtr->get_task_id();
-
-	mList.push_back(submit);
+    for(unsigned int i = 0; i < mList.size(); i++){
+        debug_info("submit id=%d\n",mList[i].id);
+        for(unsigned int j = 0; j < mList[i].tasks.size(); j++)
+             debug_info("task_id id=%d %s\n",mList[i].tasks[j],__FUNCTION__);
+    }
 }
 
 } /* namespace nvdla */

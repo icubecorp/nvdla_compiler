@@ -23,7 +23,7 @@ NvdlaConv::NvdlaConv()
     stride_h = 1;
     pad_w = 0;
     pad_h = 0;
-    if(hard_patchs[0].entry_per_slice = 7){
+    if(hard_patchs[0].entry_per_slice != 7){
         hard_patchs[0].entry_per_slice = 7;
         hard_patchs[0].skip_weight_rls = 0;
         hard_patchs[0].weight_bank = 1;
