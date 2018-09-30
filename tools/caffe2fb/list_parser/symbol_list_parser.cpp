@@ -247,7 +247,7 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
 
    const std::vector<ILoadable::MemoryListEntry> *mem_list =  \
 			   (const std::vector<ILoadable::MemoryListEntry> *)mMemoryListParserPtr->getList();
-   ILoadable::MemoryListEntry mem_entry;
+   const ILoadable::MemoryListEntry* mem_entry = NULL;
    NvU16 start_mem_id = 0;
 
    union dla_layer_param_container layer_par;
@@ -280,65 +280,67 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
    
    //get task network description mem id and mementry 
    start_mem_id = task_entry.address_list[0];
-   mem_entry = (*mem_list)[start_mem_id];
+   mem_entry = &((*mem_list)[start_mem_id]);
    //fill task network description
-   task_network_desc_blob.data = (NvU8 *)malloc(mem_entry.size);
+   task_network_desc_blob.data = (NvU8 *)malloc(mem_entry->size);
    if(task_network_desc_blob.data == NULL){
    	  printf("%s, %d, malloc buffer failed!\n", __FUNCTION__, __LINE__);
 	  return ;
    }
    pdata = task_network_desc_blob.data;
-   memset(pdata, 0, mem_entry.size);
+   memset(pdata, 0, mem_entry->size);
    //layer numbers
    network_desc.num_operations = task_layer_end_idx - task_layer_start_idx + 1;
    //operation list mem id
    network_desc.operation_desc_index = start_mem_id + 1;
    //operation buffer description mem id
-   network_desc.operation_buffer_desc_index = start_mem_id = start_mem_id + 2;
+   network_desc.operation_buffer_desc_index = start_mem_id + 2;
    memcpy(pdata, &network_desc, sizeof(struct emu_network_desc));
    
    task_network_desc_blob.interface = ILoadable::Interface_EMU1;
-   task_network_desc_blob.name = mem_entry.contents[0];
-   task_network_desc_blob.size = mem_entry.size;
+   task_network_desc_blob.name = mem_entry->contents[0];
+   task_network_desc_blob.size = mem_entry->size;
    task_network_desc_blob.subInterface = 0;
    task_network_desc_blob.version.major = 0;
    task_network_desc_blob.version.minor = 0;
    task_network_desc_blob.version.sub_minor = 0;
+   debug_info("%s, %d, name = %s\n", __FUNCTION__, __LINE__, task_network_desc_blob.name.c_str());
    //push into vector
    mList.push_back(task_network_desc_blob);
    
 
    //fill task power op list
-   mem_entry = (*mem_list)[start_mem_id + 1];
-   task_op_container_blob.data = (NvU8 *)malloc(mem_entry.size);
+   mem_entry = &((*mem_list)[start_mem_id + 1]);
+   task_op_container_blob.data = (NvU8 *)malloc(mem_entry->size);
    if(task_op_container_blob.data == NULL){
    	  printf("%s, %d, malloc buffer failed!\n", __FUNCTION__, __LINE__);
 	  return ;
    }
    pdata = task_op_container_blob.data;
-   memset(pdata, 0, mem_entry.size);
+   memset(pdata, 0, mem_entry->size);
    operation_container.softmax_op.common.op_type = 0;
    operation_container.softmax_op.axis = layer_par.nv_softmax_params.axis;
    memcpy(pdata, &operation_container, sizeof(union emu_operation_container));
    
    task_op_container_blob.interface = ILoadable::Interface_EMU1;
-   task_op_container_blob.name = mem_entry.contents[0];
-   task_op_container_blob.size = mem_entry.size;
+   task_op_container_blob.name = mem_entry->contents[0];
+   task_op_container_blob.size = mem_entry->size;
    task_op_container_blob.subInterface = 0;
    task_op_container_blob.version.major = 0;
    task_op_container_blob.version.minor = 0;
    task_op_container_blob.version.sub_minor = 0;
+   debug_info("%s, %d, name = %s\n", __FUNCTION__, __LINE__, task_op_container_blob.name.c_str());
    mList.push_back(task_op_container_blob);
 
    //fill task op buf list
-   mem_entry = (*mem_list)[start_mem_id + 2];
-   task_op_buf_blob.data = (NvU8 *)malloc(mem_entry.size);
-   if(task_op_container_blob.data == NULL){
+   mem_entry = &((*mem_list)[start_mem_id + 2]);
+   task_op_buf_blob.data = (NvU8 *)malloc(mem_entry->size);
+   if(task_op_buf_blob.data == NULL){
    	  printf("%s, %d, malloc buffer failed!\n", __FUNCTION__, __LINE__);
 	  return ;
    }
-   pdata = task_op_container_blob.data;
-   memset(pdata, 0, mem_entry.size);
+   pdata = task_op_buf_blob.data;
+   memset(pdata, 0, mem_entry->size);
    operation_buf_container.softmax_buffers.src_data.addressIndex = layer->surface_desc.src_data.address;
    operation_buf_container.softmax_buffers.src_data.channel = layer->surface_desc.src_data.channel;
    operation_buf_container.softmax_buffers.src_data.format = layer->get_bpe();
@@ -357,12 +359,13 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
    operation_buf_container.softmax_buffers.dst_data.width = layer->surface_desc.dst_data.width;
    memcpy(pdata, &operation_buf_container, sizeof(union emu_operation_buffer_container));
    task_op_buf_blob.interface = ILoadable::Interface_EMU1;
-   task_op_buf_blob.name = mem_entry.contents[0];
-   task_op_buf_blob.size = mem_entry.size;
+   task_op_buf_blob.name = mem_entry->contents[0];
+   task_op_buf_blob.size = mem_entry->size;
    task_op_buf_blob.subInterface = 0;
    task_op_buf_blob.version.major = 0;
    task_op_buf_blob.version.minor = 0;
    task_op_buf_blob.version.sub_minor = 0;
+   debug_info("%s, %d, name = %s\n", __FUNCTION__, __LINE__, task_op_buf_blob.name.c_str());
    mList.push_back(task_op_buf_blob);
    return ;
 }
@@ -681,6 +684,92 @@ void SymbolListParser::dump_blobs_info(void){
         }
     }
 
+}
+
+void SymbolListParser::debugEmuBlobInfo(void){
+    priv::Loadable::Symbol* symbol = NULL;
+	stringstream content;
+	string content_string;
+	string network = "task_1_network_desc\n";
+	string op_list = "task_1_op_list\n";
+	string buf_list = "task_1_op_buffer_list\n";
+	NvU32 mem_id;
+	NvU32 i,j;
+	NvU64 k;
+	NvU8* data = NULL;
+	debug_info("-----------------%s-------------------\n", __FUNCTION__);
+	struct emu_network_desc* network_desc;
+	union emu_operation_container* operation_container;
+	union emu_operation_buffer_container* operation_buf_container;
+    ILoadable::TaskListEntry emu_task_entry;
+    std::vector<ILoadable::TaskListEntry> *task_list = (std::vector<ILoadable::TaskListEntry> *)mTaskListParserPtr->getList();
+    if(task_list->empty()) {
+        log_error("task list is empty\n");
+        return;
+    }
+	
+	std::vector<ILoadable::MemoryListEntry>* mem_list;
+	if(!mMemoryListParserPtr){
+        log_error("mem list is empty\n");
+        return;
+	}
+	mem_list = (std::vector<ILoadable::MemoryListEntry>*)mMemoryListParserPtr->getList();
+	
+    emu_task_entry = (*task_list)[1];
+	
+	//get task start mem id : network desc mem id
+	mem_id = emu_task_entry.address_list[0]; 
+	
+	for(i=mem_id; i<mem_id+3; i++){
+		content << (*mem_list)[i].contents[0];
+		content_string = content.str();
+		for(j=0; j<mList.size(); j++){
+			if(content_string == mList[j].name){
+				symbol = &mList[j];
+				break;
+			}
+		}
+		data = symbol->data;
+		debug_info("\n");
+		debug_info("name = %s", symbol->name.c_str());
+		debug_info("interface = %d\n", symbol->interface);
+		debug_info("size = %d\n", symbol->size);
+		debug_info("version.major = %d\n", symbol->version.major);
+		debug_info("version.minor = %d\n", symbol->version.minor);
+		debug_info("version.sub_minor = %d\n", symbol->version.sub_minor);
+		debug_info("subInterface = %d\n", symbol->subInterface);
+		if(!content_string.compare(network)){
+			network_desc = (struct emu_network_desc*)data;
+			debug_info("num_operations = %d\n", network_desc->num_operations);
+			debug_info("operation_buffer_desc_index = %d\n", network_desc->operation_buffer_desc_index);
+			debug_info("operation_desc_index = %d\n", network_desc->operation_desc_index);
+		}else if(!content_string.compare(op_list)){
+			operation_container = (union emu_operation_container*)data ;
+			debug_info("axis = %d\n", operation_container->softmax_op.axis);
+			debug_info("common.op_type = %d\n", operation_container->softmax_op.common.op_type);
+		}else if(!content_string.compare(buf_list)){
+			operation_buf_container = (union emu_operation_buffer_container*)data;
+			debug_info("src_data.addressIndex = %d\n", operation_buf_container->softmax_buffers.src_data.addressIndex);
+			debug_info("src_data.channel = %d\n", operation_buf_container->softmax_buffers.src_data.channel);
+			debug_info("src_data.format = %d\n", operation_buf_container->softmax_buffers.src_data.format);
+			debug_info("src_data.height = %d\n", operation_buf_container->softmax_buffers.src_data.height);
+			debug_info("src_data.line_stride = %d\n", operation_buf_container->softmax_buffers.src_data.line_stride);
+			debug_info("src_data.size = %d\n", operation_buf_container->softmax_buffers.src_data.size);
+			debug_info("src_data.surf_stride = %d\n", operation_buf_container->softmax_buffers.src_data.surf_stride);
+			debug_info("src_data.width = %d\n", operation_buf_container->softmax_buffers.src_data.width);
+
+			debug_info("dst_data.addressIndex = %d\n", operation_buf_container->softmax_buffers.dst_data.addressIndex);
+			debug_info("dst_data.channel = %d\n", operation_buf_container->softmax_buffers.dst_data.channel);
+			debug_info("dst_data.format = %d\n", operation_buf_container->softmax_buffers.dst_data.format);
+			debug_info("dst_data.height = %d\n", operation_buf_container->softmax_buffers.dst_data.height);
+			debug_info("dst_data.line_stride = %d\n", operation_buf_container->softmax_buffers.dst_data.line_stride);
+			debug_info("dst_data.size = %d\n", operation_buf_container->softmax_buffers.dst_data.size);
+			debug_info("dst_data.surf_stride = %d\n", operation_buf_container->softmax_buffers.dst_data.surf_stride);
+			debug_info("dst_data.width = %d\n", operation_buf_container->softmax_buffers.dst_data.width);
+		}
+		debug_info("\n");
+		content.str("");
+	}
 }
 
 } /* namespace nvdla */
