@@ -695,7 +695,6 @@ void SymbolListParser::debugEmuBlobInfo(void){
 	string buf_list = "task_1_op_buffer_list\n";
 	NvU32 mem_id;
 	NvU32 i,j;
-	NvU64 k;
 	NvU8* data = NULL;
 	debug_info("-----------------%s-------------------\n", __FUNCTION__);
 	struct emu_network_desc* network_desc;
