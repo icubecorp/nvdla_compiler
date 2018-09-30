@@ -32,6 +32,7 @@ public:
 	virtual ~ListEntryParser();
 
 	virtual void  buildList() = 0;
+    virtual void  dumpList() = 0;
 	virtual const void* getList() const = 0;
 
 protected:

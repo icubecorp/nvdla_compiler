@@ -605,7 +605,7 @@ void SymbolListParser::buildList() {
     fill_taskinfo_blobs();
 }
 
-void SymbolListParser::dump_blobs_info(void){
+void SymbolListParser::dumpList(){
     priv::Loadable::Symbol symbol;
     std::vector<ILoadable::TaskListEntry> *task_list = (std::vector<ILoadable::TaskListEntry> *)mTaskListParserPtr->getList();
     debug_info("%s line=%d task_size=%d\n",__FUNCTION__,__LINE__,task_list->size());
@@ -684,6 +684,7 @@ void SymbolListParser::dump_blobs_info(void){
         }
     }
 
+    debugEmuBlobInfo();
 }
 
 void SymbolListParser::debugEmuBlobInfo(void){

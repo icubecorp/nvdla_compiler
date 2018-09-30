@@ -18,6 +18,7 @@ public:
 	virtual ~EventListParser();
 
 	void  buildList();
+    void  dumpList();
 	const void* getList() const;
 
 private:

@@ -34,11 +34,19 @@ void SubmitListParser::buildList() {
     	mList.push_back(submit);
     }
 
+
+}
+
+void SubmitListParser::dumpList() {
+    debug_info("enter SubmitListParser %s line=%d\n",__FUNCTION__,__LINE__);
     for(unsigned int i = 0; i < mList.size(); i++){
         debug_info("submit id=%d\n",mList[i].id);
         for(unsigned int j = 0; j < mList[i].tasks.size(); j++)
              debug_info("task_id id=%d %s\n",mList[i].tasks[j],__FUNCTION__);
     }
+
 }
+
+
 
 } /* namespace nvdla */

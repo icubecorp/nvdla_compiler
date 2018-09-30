@@ -20,7 +20,7 @@ public:
 
 	void  buildList();
 	const void* getList() const;
-    void dump_tensor_info(void);
+    void dumpList();
 
 
 private:

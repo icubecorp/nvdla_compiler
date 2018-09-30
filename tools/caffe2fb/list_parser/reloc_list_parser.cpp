@@ -31,5 +31,10 @@ void  RelocListParser::buildList()
 }
 
 
+void  RelocListParser::dumpList()
+{
+    //TODO
+    log_info("Dummy RelocListParser::dumpList\n");
+}
 
 } /* namespace nvdla */

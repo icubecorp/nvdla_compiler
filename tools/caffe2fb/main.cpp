@@ -1,16 +1,17 @@
-#include "net.h"
-#include "net_parser.h"
-#include "memory_list_parser.h"
-#include "symbol_list_parser.h"
-#include "tensor_desc_list_parser.h"
-#include "event_list_parser.h"
-#include "reloc_list_parser.h"
-#include "submit_list_parser.h"
-#include "address_list_parser.h"
+
+
+#include "caffe_to_flatbuf.h"
+
 
 using namespace nvdla;
 int main()
 {
+    nvdla::CaffeToFlatbuf * ctf = new CaffeToFlatbuf("lenet.param","lenet.bin");
+    ctf->loadNetwork();
+    ctf->fillAllList();
+    delete (ctf);
+    return 0;
+    #if 0
     nvdla::NetParser lenet;
 
     lenet.load_caffe_net("lenet.param","lenet.bin");
@@ -41,4 +42,5 @@ int main()
     symbollist->buildList();
     symbollist->dump_blobs_info();
     return 0;
+    #endif
 }

@@ -31,5 +31,10 @@ void  EventListParser::buildList()
     log_info("Dummy EventListParser::buildList\n");
 }
 
+void  EventListParser::dumpList()
+{
+    //TODO
+    log_info("Dummy EventListParser::dumpList\n");
+}
 
 } /* namespace nvdla */

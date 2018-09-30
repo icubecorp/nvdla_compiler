@@ -24,8 +24,8 @@
 namespace nvdla {
 
 CaffeToFlatbuf::CaffeToFlatbuf(const char * protopath, const char * modelpath) :
-	mProtoPath(nullptr),
-	mModelPath(nullptr)
+    mProtoPath(protopath),
+    mModelPath(modelpath)
 {
 	mNetParserPtr = new NetParser();
 
@@ -60,8 +60,8 @@ CaffeToFlatbuf::CaffeToFlatbuf(const char * protopath, const char * modelpath) :
 	parser = new EventListParser(mNetParserPtr);
 	mListParsers.push_back(parser);
 
-//	parser = new TensorDescListParser(mNetParserPtr,);
-//	mListParsers.push_back(parser);
+	parser = new TensorDescListParser(mNetParserPtr, (MemoryListParser*)mListParsers[MEMORY_LIST_PARSER]);
+	mListParsers.push_back(parser);
 
 	parser = new SymbolListParser(mNetParserPtr, (MemoryListParser*)mListParsers[MEMORY_LIST_PARSER], (TaskListParser*)mListParsers[TASK_LIST_PARSER]);
 	mListParsers.push_back(parser);
@@ -105,6 +105,7 @@ void CaffeToFlatbuf::fillAllList()
 	for (int i=0; i<LIST_PARSER_NUM; i++) {
 		log_debug("build list: %s\n", "test");
 		mListParsers[i]->buildList();
+        mListParsers[i]->dumpList();
 	}
 }
 

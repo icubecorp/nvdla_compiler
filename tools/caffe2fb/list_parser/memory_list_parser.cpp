@@ -18,7 +18,6 @@ namespace nvdla {
 static NvS32 mem_id = 1;
 static NvS32 conv_id = 0;
 static NvS32 sdp_id = 0;
-static NvS32 pdp_id = 0;
 
 #define MEM_ALIGNMENT_PAGE 4096
 #define MEM_ALIGNMENT_LINE 32
@@ -787,6 +786,7 @@ void  MemoryListParser::buildList()
 		tle = (*TaskList)[index];
 		taskTypeParse(&tle);
 	}
+    fillTaskAddrList();
 	return ;
 }
 
@@ -948,7 +948,7 @@ void MemoryListParser::fillTaskAddrList(void){
 	return ;
 }
 
-void MemoryListParser::debugMemList(void){
+void MemoryListParser::dumpList(){
 	
 	if(0 == mList.size()){
 		printf("%s, %d, mList is empty!\n", __FUNCTION__, __LINE__);

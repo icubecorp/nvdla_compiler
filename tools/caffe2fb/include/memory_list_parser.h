@@ -38,6 +38,7 @@ public:
 	virtual ~MemoryListParser();
 
 	void  buildList();
+    void  dumpList();
 	const void* getList() const;
 	TaskListParser* getTaskListParser();
 	NvU64 getInputMemSize(NvU32 w, NvU32 h, NvU32 c, NvU32 bpe, NvU32 align);

@@ -34,6 +34,7 @@ static int roundUp(int numToRound, int multiple)
 	virtual ~SymbolListParser();
 
 	void  buildList();
+    void  dumpList();
 	const void* getList() const;
     void fill_weight_blobs(std::vector<priv::Loadable::Symbol> *mlist, NetParser* net,\
             MemoryListParser* memory_parser);

@@ -119,8 +119,8 @@ void TensorDescListParser::buildList()
 }
 
 
-void TensorDescListParser::dump_tensor_info(void){
-    debug_info("%s line=%d\n",__FUNCTION__,__LINE__);
+void TensorDescListParser::dumpList(){
+    debug_info("enter TensorDescListParser %s line=%d\n",__FUNCTION__,__LINE__);
     for(unsigned int i = 0; i < mList.size(); i++){
         ILoadable::TensorDescListEntry tensor = mList[i];
         debug_info("name=%s\n",tensor.name.c_str());

@@ -20,7 +20,7 @@ public:
 
 	void  buildList();
 	const void* getList() const;
-    void dumplist(void);
+    void dumpList();
 
 
 private:

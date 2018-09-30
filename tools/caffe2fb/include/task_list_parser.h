@@ -38,7 +38,7 @@ public:
 
 	void fillAddressList();
 	void taskTypeParser(Layer* layer, Layer* pre_layer, NvU32* typecount, NvU32* tasktype);
-	void debugTaskList(void);
+	void dumpList();
 
 private:
 	std::vector<ILoadable::TaskListEntry> mList;

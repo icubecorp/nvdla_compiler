@@ -18,6 +18,7 @@ public:
 	virtual ~RelocListParser();
 
 	void  buildList();
+    void  dumpList();
 	const void* getList() const;
 
 private:

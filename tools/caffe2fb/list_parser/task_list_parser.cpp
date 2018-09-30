@@ -250,7 +250,7 @@ void TaskListParser::fillAddressList()
 	//TODO
 }
 
-void TaskListParser::debugTaskList(void){
+void TaskListParser::dumpList(){
 	ILoadable::TaskListEntry tle;
 	NvU32 index=0;
 	NvU32 i=0;

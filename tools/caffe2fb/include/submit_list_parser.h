@@ -19,6 +19,7 @@ public:
 	virtual ~SubmitListParser();
 
 	void  buildList();
+    void  dumpList();
 	const void* getList() const;
 
 private:

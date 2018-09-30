@@ -46,8 +46,8 @@ void AddressListParser::buildList()
 
 }
 
-void AddressListParser::dumplist(void){
-    debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
+void AddressListParser::dumpList(){
+    debug_info("enter AddressListParser %s line=%d\n",__FUNCTION__,__LINE__);
     for(unsigned int i = 0; i < mList.size(); i++){
         debug_info("id=%d\n",mList[i].id);
         debug_info("memid=%d\n",mList[i].mem_id);
