@@ -50,8 +50,7 @@ MemoryListParser::MemoryListParser(NetParser* net, TaskListParser *tlp) :
 	mle.bind_id = 0;
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
 	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC;
-	mle.offsets.push_back(0);
-	mle.size = 0; 
+	mle.size = 4096; 
 	mle.tensor_desc_id = 0;
 	mList.push_back(mle);
 }
@@ -131,7 +130,6 @@ void  MemoryListParser::layerInputParse(Layer* layer){
 	mle.bind_id = 0;
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
 	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_INPUT;
-	mle.offsets.push_back(0);
 	mle.size  = getInputMemSize(w, h, c, bpe, 32);
 	mle.tensor_desc_id = 0;
 	//push mem entry to vector
@@ -341,7 +339,6 @@ void MemoryListParser::layerSdpParse(Layer* layer, Layer* pre_layer){
 	while(mle.offsets.size()){
 	   mle.offsets.pop_back();
 	}
-	mle.offsets.push_back(0);
     while(mle.contents.size()){
     	mle.contents.pop_back();
     }
@@ -428,7 +425,6 @@ void MemoryListParser::layerPdpParse(Layer* layer, Layer* pre_layer){
 	mle.bind_id = 0;
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
 	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_SET;
-	mle.offsets.push_back(0);
 	mle.size = layer->surface_desc.dst_data.size; 
 	mle.tensor_desc_id = 0;
 	//push mem entry to vector
@@ -487,7 +483,6 @@ void MemoryListParser::layerSoftmaxParse(Layer* layer, Layer* pre_layer){
 	mle.bind_id = 0;
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
 	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_OUTPUT;
-	mle.offsets.push_back(0);
 	mle.size = layer->surface_desc.dst_data.size; 
 	mle.tensor_desc_id = 0;
 	//push mem entry to vector
@@ -593,13 +588,9 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	while(mle.contents.size()){
 	   mle.contents.pop_back();
 	}
-	content.str("");
-	content << "task_" << taskentry->id << "_lut_list" << endl;
-	mle.contents.push_back(content.str());
 	while(mle.offsets.size()){
 	   mle.offsets.pop_back();
 	}
-	mle.offsets.push_back(0);
 	mle.size = 4096; 
 	mle.tensor_desc_id = 0;
 	mList.push_back(mle);
@@ -613,13 +604,9 @@ void MemoryListParser::allocMemforDlaTask(ILoadable::TaskListEntry* taskentry){
 	while(mle.contents.size()){
 	   mle.contents.pop_back();
 	}
-	content.str("");
-	content << "task_" << taskentry->id << endl;
-	mle.contents.push_back(content.str());
 	while(mle.offsets.size()){
 	   mle.offsets.pop_back();
 	}
-	mle.offsets.push_back(0);
 	mle.size = 4096; 
 	mle.tensor_desc_id = 0;
 	mList.push_back(mle);
@@ -705,13 +692,9 @@ void MemoryListParser::allocMemforEmuTask(ILoadable::TaskListEntry* taskentry){
 		while(mle.contents.size()){
 		   mle.contents.pop_back();
 		}
-		content.str("");
-		content << "task_" << taskentry->id << endl;
-		mle.contents.push_back(content.str());
 		while(mle.offsets.size()){
 		   mle.offsets.pop_back();
 		}
-		mle.offsets.push_back(0);
 		mle.size = 4096; 
 		mle.tensor_desc_id = 0;
 		mList.push_back(mle);
@@ -821,7 +804,8 @@ void MemoryListParser::getNetWorkDescMemId(NvU16 task_id, NvU16* mem_id){
 }
 
 void MemoryListParser::getMemId(NvU16 task_id, vector<NvU16>* mem_id_list){
-	if(!mem_id_list){
+	
+    if(!mem_id_list){
 		printf("%s, %d, parameter is NULL!\n", __FUNCTION__, __LINE__);
 		return ;
 	}
@@ -830,9 +814,9 @@ void MemoryListParser::getMemId(NvU16 task_id, vector<NvU16>* mem_id_list){
 		return ;
 	}
 	NvU16 mem_id = 0;
+	NvU16 first_task_mem_id = 0;
 	ILoadable::MemoryListEntry mle;
 	NvU32 index;
-	NvU32 i;
 
 	while((*mem_id_list).size()){
 		(*mem_id_list).pop_back();
@@ -840,17 +824,22 @@ void MemoryListParser::getMemId(NvU16 task_id, vector<NvU16>* mem_id_list){
 	
 	//task  network desc id
 	getNetWorkDescMemId(task_id, &mem_id);
+	getNetWorkDescMemId(0, &first_task_mem_id);
 	//push the mem id in vector
 	(*mem_id_list).push_back(mem_id);
 
 	debug_info("%s, %d, mem_id = %d\n", __FUNCTION__, __LINE__, mem_id);
 
 	//mem id 0 not need to push
-	for(index=1; index<mList.size(); index++){
+	for(index=1; index < first_task_mem_id; index++){
 		mle = mList[index];
 		(*mem_id_list).push_back(mle.id);
 	}
-	
+	for(index=mem_id; index < mem_id + 6; index++){
+		mle = mList[index];
+		(*mem_id_list).push_back(mle.id);
+	}
+#if 0	
 	debug_info("%s, %d, (*mem_id_list).size = %d\n", __FUNCTION__, __LINE__, (*mem_id_list).size());
 	//remove the mem id which belong the other task
 	for(index=0; index<mList.size(); index++){
@@ -875,6 +864,8 @@ void MemoryListParser::getMemId(NvU16 task_id, vector<NvU16>* mem_id_list){
 			}
 		}
 	}
+#endif
+
 	debug_info("%s, %d, (*mem_id_list).size = %d\n", __FUNCTION__, __LINE__, (*mem_id_list).size());
 	return ;
 }

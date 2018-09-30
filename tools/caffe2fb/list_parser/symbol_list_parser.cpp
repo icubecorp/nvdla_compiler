@@ -101,6 +101,7 @@ int SymbolListParser::get_offset(uint16_t k, uint16_t c, uint16_t h, uint16_t w,
 
 void *SymbolListParser::fill_bias_weight_data(Layer * layer){
 
+    debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
     struct dla_surface_desc surface_desc = layer->surface_desc;
     NvU64 mem_size = surface_desc.weight_data.size;
     union dla_layer_param_container params = layer->get_params();
@@ -146,6 +147,7 @@ void *SymbolListParser::fill_bias_weight_data(Layer * layer){
 
 void *SymbolListParser::fill_conv_weight_data(Layer * layer){
 
+    debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
     struct dla_surface_desc surface_desc = layer->surface_desc;
     NvU64 mem_size = surface_desc.weight_data.size;
     union dla_layer_param_container params = layer->get_params();
@@ -193,6 +195,8 @@ void *SymbolListParser::fill_conv_weight_data(Layer * layer){
 void SymbolListParser::fill_weight_blobs(std::vector<priv::Loadable::Symbol> *mlist,
         NetParser* net, MemoryListParser* memory_parser){
 
+
+    debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
     std::vector<Layer*> layers = mNetParserPtr->getLayers();
     const std::vector<ILoadable::MemoryListEntry> *mem_list =  \
             (const std::vector<ILoadable::MemoryListEntry> *)memory_parser->getList();
@@ -234,6 +238,7 @@ void SymbolListParser::fill_weight_blobs(std::vector<priv::Loadable::Symbol> *ml
 
 void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_entry){
 	
+   debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
    if(task_entry.interface != ILoadable::Interface_EMU1){
 	   printf("%s, %d, this is emu task, error!\n",__FUNCTION__, __LINE__);
 	   return ;
@@ -497,6 +502,7 @@ void SymbolListParser::fill_dla_dep_graph_blob(ILoadable::TaskListEntry task_ent
 void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_entry){
 
     std::vector<Layer*> layers = mNetParserPtr->getLayers();
+    debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
     const std::vector<ILoadable::MemoryListEntry> *mem_list =  \
             (const std::vector<ILoadable::MemoryListEntry> *)mMemoryListParserPtr->getList();
     priv::Loadable::Symbol task_net_desc_blob;
@@ -514,7 +520,9 @@ void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_e
     int32_t index = 0;
     mem_entry = (*mem_list)[task_entry.address_list[task_net_desc_address_index]];
     task_net_desc_blob.data = (NvU8 *)malloc(mem_entry.size);
+    debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
     task_net_desc_blob.name = mem_entry.contents[0];
+    debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
     task_net_desc_blob.size = mem_entry.size;
     struct dla_network_desc net_desc;
     memset(&net_desc, 0, sizeof(struct dla_network_desc));
@@ -540,7 +548,9 @@ void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_e
 
     mem_entry = (*mem_list)[task_entry.address_list[task_dep_graph_address_index]];
     task_dep_graph_blob.data = (NvU8 *)malloc(mem_entry.size);
+    debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
     task_dep_graph_blob.name = mem_entry.contents[0];
+    debug_info("enter %s line=%d\n",__FUNCTION__,__LINE__);
     task_dep_graph_blob.size = mem_entry.size;
     fill_dla_dep_graph_blob(task_entry, &task_dep_graph_blob);
     
@@ -572,6 +582,7 @@ void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_e
     mList.push_back(task_op_list_blob);
     mList.push_back(task_surf_desc_blob);
 
+    debug_info("exit %s line=%d\n",__FUNCTION__,__LINE__);
 }
 
 
