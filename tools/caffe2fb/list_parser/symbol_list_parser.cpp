@@ -297,9 +297,9 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
    //layer numbers
    network_desc.num_operations = task_layer_end_idx - task_layer_start_idx + 1;
    //operation list mem id
-   network_desc.operation_desc_index = start_mem_id + 1;
+   network_desc.operation_desc_index = start_mem_id + 1 - 6;
    //operation buffer description mem id
-   network_desc.operation_buffer_desc_index = start_mem_id + 2;
+   network_desc.operation_buffer_desc_index = start_mem_id + 2 -6;
    memcpy(pdata, &network_desc, sizeof(struct emu_network_desc));
    
    task_network_desc_blob.interface = ILoadable::Interface_EMU1;
@@ -323,8 +323,8 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
    }
    pdata = task_op_container_blob.data;
    memset(pdata, 0, mem_entry->size);
-   operation_container.softmax_op.common.op_type = 1; //softmax
-   operation_container.softmax_op.axis = layer_par.nv_softmax_params.axis;
+   operation_container.softmax_op.common.op_type = 1;//softmax
+   operation_container.softmax_op.axis = 1;//layer_par.nv_softmax_params.axis;
    memcpy(pdata, &operation_container, sizeof(union emu_operation_container));
    
    task_op_container_blob.interface = ILoadable::Interface_EMU1;
@@ -354,7 +354,7 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
    operation_buf_container.softmax_buffers.src_data.surf_stride = layer->surface_desc.src_data.surf_stride;
    operation_buf_container.softmax_buffers.src_data.width = layer->surface_desc.src_data.width;
    operation_buf_container.softmax_buffers.src_data.line_stride = layer->surface_desc.src_data.line_stride;
-
+   
    operation_buf_container.softmax_buffers.dst_data.addressIndex = layer->surface_desc.dst_data.address;
    operation_buf_container.softmax_buffers.dst_data.channel = layer->surface_desc.dst_data.channel;
    operation_buf_container.softmax_buffers.dst_data.format = operation_buf_container.softmax_buffers.src_data.format;
@@ -534,7 +534,7 @@ void SymbolListParser::fill_nvdla_taskinfo_blobs(ILoadable::TaskListEntry task_e
     net_desc.roi_array_index = -1;
     net_desc.surface_index = -1;
     net_desc.stat_list_index = -1;
-    net_desc.num_rois = 0;
+    net_desc.num_rois = 1;
     net_desc.num_operations = task_entry.postactions[0] - task_entry.preactions[0] + 1;
     net_desc.num_luts = 0;
     net_desc.num_addresses = task_entry.address_list.size();

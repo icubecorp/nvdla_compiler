@@ -169,7 +169,7 @@ void NvDlaDebugPrintf(const char *format, ... )
     vprintf(format, ap);
     va_end( ap );
 }
-
+#if 0
 NvDlaError
 NvDlaThreadCreate( NvDlaThreadFunction function, void *args,
     NvDlaThreadHandle *thread)
@@ -259,7 +259,7 @@ void NvDlaThreadYield(void)
 {
     (void)sched_yield();
 }
-
+#endif
 NvDlaError NvDlaStat(const char *filename, NvDlaStatType *stat)
 {
     NvDlaFileHandle file = 0;

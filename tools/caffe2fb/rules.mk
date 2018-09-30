@@ -36,7 +36,7 @@ NVDLA_SRC_FILES := \
 	blob.cpp \
 	main.cpp \
 	debug.cpp \
-    	net_parser.cpp \
+    net_parser.cpp \
 	nvdla_layer/conv.cpp \
 	nvdla_layer/pdp.cpp \
 	nvdla_layer/sdp.cpp \
@@ -44,9 +44,9 @@ NVDLA_SRC_FILES := \
 	nvdla_layer/nv_softmax.cpp \
 	caffe_layer/input.cpp \
 	caffe_layer/relu.cpp \
-    	caffe_layer/softmax.cpp \
-    	caffe_layer/innerproduct.cpp \
-    	caffe_layer/pooling.cpp \
+    caffe_layer/softmax.cpp \
+    caffe_layer/innerproduct.cpp \
+    caffe_layer/pooling.cpp \
 	caffe_layer/convolution.cpp \
 	list_parser/list_entry_parser.cpp \
 	list_parser/task_list_parser.cpp \
@@ -61,6 +61,7 @@ NVDLA_SRC_FILES := \
 NVDLA_SRC_FILES += \
 	caffe_to_flatbuf.cpp \
 	$(ROOT)/core/common/Loadable.cpp \
+	$(ROOT)/port/linux/nvdla_os.c \
 	$(ROOT)/core/common/Check.cpp \
 	$(ROOT)/core/common/ErrorLogging.c 
 	
@@ -69,6 +70,7 @@ INCLUDES += \
     -I$(ROOT)/include \
     -I$(ROOT)/core/include \
     -I$(ROOT)/core/common/include \
+    -I$(ROOT)/port/linux/include \
     -I$(ROOT)/external/include \
     -I$(ROOT)/external/libjpeg-turbo \
     -I$(LOCAL_DIR)/include \

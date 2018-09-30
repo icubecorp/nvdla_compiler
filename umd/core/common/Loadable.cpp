@@ -34,8 +34,11 @@
 #include "priv/loadable_generated.h"
 
 #include "ErrorMacros.h"
+#include "debug.h"
+#include "nvdla_os_inf.h"
 
 using std::endl;
+using std::string;
 
 
 namespace nvdla
@@ -608,8 +611,56 @@ bool Loadable::serialize()
         CreateLoadableDirect(mFbb, &loadable_version, &task_list, &memory_list, &address_list, &event_list, &blobs, &tensor_desc_list, &reloc_list, &submit_list);
 
     mFbb.Finish(l, "NVDA");
-
+    saveLoadable("/home2/sunyijiang/branch/sw/tools/flatbuffer");
     return true;
+}
+
+NvDlaError Loadable::saveLoadable(const string loadableName_p)
+{
+        NvDlaError e = NvDlaSuccess;
+        std::string loadableName;
+        NvDlaFileHandle file;
+        NvDlaStatType finfo;
+        size_t file_size;
+        NvU8 *buf = 0;
+        NvDlaError rc;
+        // Determine loadable path
+        if (loadableName_p == "")
+        {
+            log_error("No loadable found to load");
+        }
+    
+        loadableName = loadableName_p;
+    
+        rc = NvDlaFopen(loadableName.c_str(), NVDLA_OPEN_READ|NVDLA_OPEN_WRITE|NVDLA_OPEN_CREATE, &file);
+        if (rc != NvDlaSuccess)
+        {
+            ORIGINATE_ERROR_FAIL(NvDlaError_BadParameter, "couldn't open %s\n", loadableName.c_str());
+        }
+        rc = NvDlaFstat(file, &finfo);
+        if ( rc != NvDlaSuccess)
+        {
+            ORIGINATE_ERROR_FAIL(NvDlaError_BadParameter, "couldn't get file stats for %s\n", loadableName.c_str());
+        }
+#if 0
+       file_size = NvDlaStatGetSize(&finfo);
+        if ( !file_size ) {
+            ORIGINATE_ERROR_FAIL(NvDlaError_BadParameter, "zero-length for %s\n", loadableName.c_str());
+        }
+#endif
+        file_size = mFbb.GetSize();
+        buf = mFbb.GetBufferPointer();
+        NvDlaFseek(file, 0, NvDlaSeek_Set);
+    
+        rc = NvDlaFwrite(file, buf, file_size);
+        if ( rc != NvDlaSuccess )
+        {
+            NvDlaFree(buf);
+            ORIGINATE_ERROR_FAIL(NvDlaError_BadParameter, "read error for %s\n", loadableName.c_str());
+        }
+        NvDlaFclose(file);
+fail:
+        return e;
 }
 
 NvDlaError Loadable::getSerializedData(NvU8 *buffer)

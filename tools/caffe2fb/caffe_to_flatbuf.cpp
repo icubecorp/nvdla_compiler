@@ -128,13 +128,17 @@ void CaffeToFlatbuf::generateFlatbuf()
 
 
     //TODO set symbol with blob
-    /*
     const std::vector<priv::Loadable::Symbol>* symbols =
-    		(const std::vector<priv::Loadable::Symbol>*)mListParsers[SYMBOL_LIST_PARSER]->getList();
-    for (int i=0; i<symbols->size(); i++)
-    	mLoadable.priv()->setSymbolContent(name, Blob, data);
-	*/
-
+            (const std::vector<priv::Loadable::Symbol>*)mListParsers[SYMBOL_LIST_PARSER]->getList();
+    for (unsigned int i=0; i < symbols->size(); i++){
+        ILoadable::Blob blob;
+        blob.name = (*symbols)[i].name;
+        blob.interface = (*symbols)[i].interface;
+        blob.size = (*symbols)[i].size;
+        blob.subInterface = (*symbols)[i].subInterface;
+        blob.version = (*symbols)[i].version;
+        mLoadable.priv()->setSymbolContent((*symbols)[i].name, blob, (*symbols)[i].data);
+    }
     mLoadable.priv()->serialize();
 
     //TODO should call flatbuffers::SaveFile(), where to find this function?

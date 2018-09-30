@@ -484,7 +484,7 @@ void MemoryListParser::layerSoftmaxParse(Layer* layer, Layer* pre_layer){
 	mle.domain = nvdla::ILoadable::MemoryDomain_SYSMEM;
 	mle.flags = nvdla::ILoadable::MemoryFlags_ALLOC | nvdla::ILoadable::MemoryFlags_OUTPUT;
 	mle.size = layer->surface_desc.dst_data.size; 
-	mle.tensor_desc_id = 0;
+	mle.tensor_desc_id = 1;
 	//push mem entry to vector
 	mList.push_back(mle);
 	mem_id++;

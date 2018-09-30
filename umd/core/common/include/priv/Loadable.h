@@ -32,10 +32,11 @@
 #include <map>
 
 #include <nvdla/ILoadable.h>
-
+#include <string.h>
 #include "priv/Type.h"
 #include "priv/loadable_generated.h"
 
+using std::string;
 namespace nvdla
 {
 
@@ -125,7 +126,7 @@ public: // internally facing
 
     Loadable();
     virtual ~Loadable();
-
+    NvDlaError saveLoadable(const string loadableName_p);
     virtual bool serialize();
     virtual NvDlaError getSerializedData(NvU8 *buffer);
     virtual NvDlaError getSerializedDataSize(NvU64 *size);
