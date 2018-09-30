@@ -303,7 +303,7 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
    task_network_desc_blob.subInterface = 0;
    task_network_desc_blob.version.major = 0;
    task_network_desc_blob.version.minor = 0;
-   task_network_desc_blob.version.sub_minor = 0;
+   task_network_desc_blob.version.sub_minor = 1;
    debug_info("%s, %d, name = %s\n", __FUNCTION__, __LINE__, task_network_desc_blob.name.c_str());
    //push into vector
    mList.push_back(task_network_desc_blob);
@@ -318,7 +318,7 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
    }
    pdata = task_op_container_blob.data;
    memset(pdata, 0, mem_entry->size);
-   operation_container.softmax_op.common.op_type = 0;
+   operation_container.softmax_op.common.op_type = 1; //softmax
    operation_container.softmax_op.axis = layer_par.nv_softmax_params.axis;
    memcpy(pdata, &operation_container, sizeof(union emu_operation_container));
    
@@ -328,7 +328,7 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
    task_op_container_blob.subInterface = 0;
    task_op_container_blob.version.major = 0;
    task_op_container_blob.version.minor = 0;
-   task_op_container_blob.version.sub_minor = 0;
+   task_op_container_blob.version.sub_minor = 1;
    debug_info("%s, %d, name = %s\n", __FUNCTION__, __LINE__, task_op_container_blob.name.c_str());
    mList.push_back(task_op_container_blob);
 
@@ -348,6 +348,7 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
    operation_buf_container.softmax_buffers.src_data.size = layer->surface_desc.src_data.size;
    operation_buf_container.softmax_buffers.src_data.surf_stride = layer->surface_desc.src_data.surf_stride;
    operation_buf_container.softmax_buffers.src_data.width = layer->surface_desc.src_data.width;
+   operation_buf_container.softmax_buffers.src_data.line_stride = layer->surface_desc.src_data.line_stride;
 
    operation_buf_container.softmax_buffers.dst_data.addressIndex = layer->surface_desc.dst_data.address;
    operation_buf_container.softmax_buffers.dst_data.channel = layer->surface_desc.dst_data.channel;
@@ -364,7 +365,7 @@ void SymbolListParser::fill_emu_taskinfo_blobs(ILoadable::TaskListEntry task_ent
    task_op_buf_blob.subInterface = 0;
    task_op_buf_blob.version.major = 0;
    task_op_buf_blob.version.minor = 0;
-   task_op_buf_blob.version.sub_minor = 0;
+   task_op_buf_blob.version.sub_minor = 1;
    debug_info("%s, %d, name = %s\n", __FUNCTION__, __LINE__, task_op_buf_blob.name.c_str());
    mList.push_back(task_op_buf_blob);
    return ;
