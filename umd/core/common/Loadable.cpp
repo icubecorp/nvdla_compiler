@@ -611,7 +611,7 @@ bool Loadable::serialize()
         CreateLoadableDirect(mFbb, &loadable_version, &task_list, &memory_list, &address_list, &event_list, &blobs, &tensor_desc_list, &reloc_list, &submit_list);
 
     mFbb.Finish(l, "NVDA");
-    saveLoadable("/home2/sunyijiang/branch/sw/tools/flatbuffer");
+    saveLoadable("flatbuffer");
     return true;
 }
 

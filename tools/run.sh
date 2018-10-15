@@ -1,6 +1,11 @@
-work_dir="/home2/sunyijiang/branch/sw/umd/out/runtime/caffe2fb"
+script_dir=`pwd`
+cd caffe2fb
+make clean 
+make
+work_dir="../../umd/out/runtime/caffe2fb"
 cd $work_dir
-cp /home2/sunyijiang/ncnn/caffe/lenet/lenet.param ./
-cp /home2/sunyijiang/ncnn/caffe/lenet/lenet.bin ./
+cp $script_dir/lenet.param ./
+cp $script_dir/lenet.bin ./
 ./caffe2fb
 
+cp flatbuffer $script_dir/
